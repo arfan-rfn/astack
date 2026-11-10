@@ -349,6 +349,8 @@ class Project:
             canonical = self.root / ".agents/skills" / name / "SKILL.md"
             if not canonical.is_file():
                 add(f"Selected skill not discoverable: {name}")
+            elif not re.search(rf"^name:\s*{re.escape(name)}\s*$", canonical.read_text(), re.M):
+                add(f"Selected skill declares a different discovered name: {name}")
             if "claude" in self.d["adapters"]:
                 alias = self.root / ".claude/skills" / name / "SKILL.md"
                 if not alias.is_file() or (

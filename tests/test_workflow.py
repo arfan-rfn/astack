@@ -115,6 +115,13 @@ class WorkflowTests(unittest.TestCase):
         with self.p.lock(), self.assertRaisesRegex(w.WorkflowError, "Missing or external skill reference"):
             self.p.activate(self.files(revision))
 
+    def test_source_skill_must_declare_selected_discovery_name(self):
+        path = self.source / "skills/workflow-build/SKILL.md"
+        path.write_text(path.read_text().replace("name: workflow-build", "name: unexpected"))
+        rev = self.commit("wrong discovered name")
+        with self.p.lock(), self.assertRaisesRegex(w.WorkflowError, "different discovered name"):
+            self.p.activate(self.files(rev))
+
     def test_capability_failure_is_scoped(self):
         self.install()
         self.p.d["capabilities"] = {"ios": "optional"}
