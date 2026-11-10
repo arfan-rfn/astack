@@ -1,25 +1,21 @@
 ---
 name: workflow-verify
-description: Check project quality gates, required capabilities, and acceptance evidence before reporting completion.
+description: Collect acceptance evidence for the current revision before reporting a build or fix complete. Use after the repository checks pass and before a handoff.
 ---
 
-# Verify the consumed revision
+# Verify the current revision
 
-Read the project's instructions, approved plan, saved task state, and current Git
-diff. Check required references and capabilities. Stop affected work when a required
-tool or capability is missing; record the prerequisite and continue independent work.
+1. **Checks.** Run the project's checks at the required scope, with gstack `verify`
+   where installed. Fix the code until they pass. The checks, coverage floors and
+   database serialization stay as the project defines them.
+2. **Journeys.** Walk every accepted journey through its real interface, including
+   awkward inputs and failures. Use the project's QA procedure and gstack `qa` for
+   the matching CLI, API, browser or device. A CLI is tested from the shell.
+3. **Record.** For each check and journey, write the command, working directory, exit
+   status, revision and evidence path. Keep the original failure beside its fix.
+4. **Label the evidence** as static inspection, fixture replay, live run or
+   production proof.
+5. **Pending proof.** List each check you could not run with what it needs. An
+   unavailable check counts as pending.
 
-Run the project's checks at the required scope. An unavailable check is never passed.
-Do not edit checks, lower coverage, suppress assertions, or skip DB serialization
-to make a change pass. Keep schema generation and native-device
-proof where project rules require them.
-
-Exercise each accepted journey through its actual interface, including awkward
-inputs and failures. Keep evidence for the actual revision after the latest edit.
-Distinguish static inspection, fixture replay, live execution, and production proof.
-Report unavailable provider/native/remote checks as pending with their prerequisites.
-
-Follow the project's QA workflow for the relevant CLI, API, browser or native surface,
-including gstack where the project uses it. Never launch a browser solely to test a
-CLI. Record each command, working directory, exit status, revision and evidence path;
-preserve the original failed result and its fix.
+Evidence is valid for the revision it ran on. Rerun what a later edit touches.

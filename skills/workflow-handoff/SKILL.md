@@ -1,19 +1,21 @@
 ---
 name: workflow-handoff
-description: Hand off verified work with exact revisions, release boundaries, recovery state and honest exceptions.
+description: Report a finished build or fix to the user with revisions, evidence, manual test steps and open items. Use at the end of a build, before review and ship.
 ---
 
 # Evidence handoff
 
-Read the project's instructions and saved task state. Report what changed, why, the
-consumed revisions, checks actually run, and material limitations. Name any reused
-checks and their applicable inputs. Do not imply an untested host or adapter passed.
+Read the project instructions and the saved state, then write the handoff in this
+order.
 
-Record each release's readiness separately. List pending CI, unfinished integrated
-journeys, optional platform proof, governance decisions and rollout exceptions with
-the next action. Preserve the project's normal review/ship/deploy separation.
+1. **Decisions made for the user.** Every choice the plan left open, with the reason.
+2. **Manual test.** Numbered steps with accounts, URLs, inputs and the expected
+   result. Leave the dev servers running and list their URLs.
+3. **Changed.** Branch and head revision per repository and per release.
+4. **Evidence.** Checks and journeys that ran, with results and evidence paths. Name
+   any reused result and the revision it came from.
+5. **Pending.** Unproven journeys, failing or unfinished CI, and proof that needs a
+   provider, device or production, each with its next action.
+6. **Next.** The stage that follows, which starts on the user's word.
 
-When updating shared skills, record the source Git revision and review the diff
-before copying files. Preserve local edits and wait for sessions using those files
-to finish. Keep the previous version recoverable through Git or a backup. Never
-overwrite unrelated project rules or user settings.
+Honor the project's own summary format when it defines one.

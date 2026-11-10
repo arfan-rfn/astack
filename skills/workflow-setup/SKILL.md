@@ -1,134 +1,76 @@
 ---
 name: workflow-setup
-description: Set up or update a project's astack workflow by downloading declared upstream skills, preparing gstack, and integrating existing agent instructions.
+description: Install or update the astack workflow for this user on this machine by installing astack's skills, the pinned upstream skills and gstack at user level. Use on a new machine, or after astack or its dependency list changes.
 ---
 
 # Set up the development workflow
 
-Use [the dependency list](references/dependencies.json) as the single inventory of
-shared upstream requirements. The selection is explicit: do not install every
-skill found on the machine. This is an agent-run installer using existing Git, npm,
-and upstream setup tools; it needs no astack Python package or background service.
+Setup installs at user level, so every project on the machine uses the same skills.
+[The dependency list](references/dependencies.json) is the only inventory. Install
+exactly what it names.
 
-## Discover and prepare
+## Steps
 
-Resolve the target project and the astack source checkout. Read existing `AGENTS.md`,
-`CLAUDE.md`, constraints, package metadata, and project/user skill discovery roots.
-Identify the active/requested agent; current recipes cover Codex and Claude Code.
-Check Git, Node/npm, and Bun for gstack. Report missing prerequisites rather than
-silently installing system packages or claiming a complete setup.
+1. **Check tools.** Git, Node with npm, and Bun for gstack. Report a missing tool and
+   stop the steps that need it.
+2. **Inventory.** Run `npx --yes skills@<skills_cli> list -g` and read the revision of
+   `~/.claude/skills/gstack`. Mark each dependency missing, current, outdated or
+   locally edited.
+3. **Show the plan.** Print what you will install, update, keep and skip. For a
+   locally edited skill, show the diff and keep it until the user decides. The user's
+   request to install covers the rest of the plan.
+4. **Install astack's skills** with the first command below.
+5. **Install the portable skills** with the second command, one entry at a time.
+6. **Set up gstack** with the recipe below.
+7. **Verify.** Every skill in the dependency list and every astack skill resolves for
+   each selected agent, and each name appears once.
+8. **Report** installed, kept and blocked items. Tell the user to start a fresh
+   session, since a running session keeps the skills it loaded.
 
-Inventory skills already routed by project instructions and, when accessible,
-relevant recent sessions. Record names, actual source, version, discovery path, and
-local edits without collecting credentials. Compare them with the dependency list.
-Use verified sources for missing requirements. Report additional project-specific
-skills separately. Reuse or install project-required additions when the project's
-own repository or lock establishes their source; leave unresolved sources blocked.
-Do not publish private skills or silently add them to the shared dependency list.
-`grill-me` is Matt's router to `grilling`; install both, not a new handwritten alias.
+## Commands
 
-Present the planned changes, then carry out the requested project-local setup.
-An invocation to install authorizes that setup; do not ask again for each ordinary
-file. Reuse verified matching installations where possible. Do not replace a global
-installation or files used by a running session. Preserve edited copies and show
-conflicts before overwriting. Stage downloads separately and serialize installers
-within a project, since they share the skills lock and discovery directories.
-
-## Install portable skills and astack
-
-For each package in the dependency list, build its URL as
-`https://github.com/<repository>/tree/<revision>[/<subdirectory>]`. From an empty
-staging directory, use the declared CLI release:
+Agents are `codex`, `claude-code` or both. Run installers one at a time, because they
+share the user-level lock file.
 
 ```sh
-npx --yes skills@<skills_cli> add <url> --skill <selected-names> --agent <agents> --yes
+npx --yes skills@<skills_cli> add arfan-rfn/astack --skill '*' --agent <agents> --global --yes
+npx --yes skills@<skills_cli> add <url> --skill <names> --agent <agents> --global --yes
 ```
 
-Set `XDG_STATE_HOME` to a project-local state directory and disable installer telemetry
-for these commands; the CLI otherwise keeps selection-history state in user globals.
-Use `codex`, `claude-code`, or both as requested. Omit global flags. Keep complete
-skill folders, including references, and retain upstream license notices when
-redistributing them. The manager owns `skills-lock.json`: never hand-edit it or
-replace an existing project lock with the staging lock. For the real project, run
-only the reviewed missing/updated selections after conflict checks; inspect that
-the manager preserved unrelated lock entries and recorded the exact `ref` values.
-Do not rely on a lock alone to accept an edited existing directory.
+- `<url>` is `https://github.com/<repository>/tree/<revision>[/<subdirectory>]`.
+- After the installs, apply each `installed_frontmatter` patch the dependency list
+  declares. The `unslop` patch turns on model invocation because this workflow
+  applies it to all prose. Reapply it after every update.
+- `grill-me` routes to `grilling`. Install both.
 
-Copy astack's own skill folders from the selected checkout into `.agents/skills`.
-For Claude, use relative aliases from `.claude/skills` to that canonical content,
-or verified equal copies if symlinks are unavailable. Do not duplicate a compatible
-installation under several names. For a Claude-only project, its discovery path
-still needs to resolve every selected skill.
+## gstack
 
-Apply only the dependency list's declared frontmatter adapter changes to installed
-copies. Unslop's explicit-only upstream setting is changed to `false` to honor this
-workflow's always-on prose preference. Record that patch; do not modify upstream
-source or overwrite other local customizations. Keep the upstream license with it.
+gstack has its own installer. The skills CLI and a Markdown copy both leave it broken.
 
-## Prepare gstack with its own setup
+1. Clone `https://github.com/<gstack.repository>` into `~/.claude/skills/gstack`
+   when the folder is absent.
+2. An existing checkout at another revision, or with local changes, is the user's.
+   Show its revision and status and ask before moving it.
+3. Check out the pinned revision and read its `setup` script.
+4. Run `./setup --host claude --no-prefix --no-team`, then the same with
+   `--host codex`, one at a time. Add `--no-browser` only when the user asks.
+5. Run `./setup --status`. Every skill under `gstack.required` is registered under
+   its short name, for example `review`. Record a browser that failed to install as a
+   missing capability.
 
-Do not install gstack by copying its Markdown or through the generic skills CLI.
-Fetch the exact declared commit into `.claude/skills/gstack`; verify its origin
-and revision. Read that revision's setup before running it. Keep its license and
-supporting binaries/resources intact.
+Investigate any nonzero exit before continuing.
 
-Scope setup's provider and state roots to this project:
-`CODEX_HOME=<project>/.agents`, `CLAUDE_CONFIG_DIR=<project>/.claude`, and
-`GSTACK_STATE_ROOT=<project>/.gstack/astack`. Also set `GSTACK_PLAN_DIR` for helper
-commands to the project's declared plan root, or `.gstack/astack/plans` when absent;
-state scoping alone still defaults plans to the user's `.claude/plans` at this pin.
-These are setup/helper scopes, not
-instructions to relocate an agent's credentials or change its launch environment.
-Use stock `./setup --host codex --global --prefix --no-team --no-harness-auto`,
-or `--host claude`; run each separately for both agents. Here `--global` is scoped
-by those provider roots and the project-local source layout. At the selected pin,
-CLAUDE_CONFIG_DIR alone does not redirect Claude skill registration: the source must
-live under the project's `.claude/skills/gstack`, not an arbitrary cache directory.
-Never run it with unverified roots or source paths pointing to user globals.
-Disable both `auto_upgrade` and `update_check` using this revision's gstack-config.
-Do not change the runtime provider/model. Record any setup-time rendering profile.
-If Codex discovery folders are prefixed but their generated frontmatter names are
-short, use the bundled `bin/gstack-patch-names <generated-skill-parent> true` on the
-resolved Codex render directory inside this project. Verify that directory first;
-record this upstream-supported render step rather than patching pristine source.
-This pin also uses legacy welcome/cache markers under `~/.gstack` and normal package
-caches. Inspect those paths; do not describe setup as a hermetic sandbox. If the
-host forbids those writes, report the upstream limitation instead of changing HOME
-or silently patching setup. Global agent settings and installations remain protected.
+## Updates
 
-Default upstream setup prepares its browser assets. Use `--no-browser` only when
-requested, or report the missing browser capability if preparation fails. Never
-claim browser/native proof from helper installation alone. Keep gstack source,
-state, and generated `gstack`/`gstack-*` discovery entries local and ignored in Git;
-add only these owned patterns to the project's ignore rules, preserving existing ones.
-Do not end symlink ignore patterns such as `/.agents/skills/gstack-*` with `/`.
+After astack changes, run the first command again on each machine. After a pin
+changes in the dependency list, rerun this skill. `/gstack-upgrade` moves gstack past
+the pin, so record the new revision in the dependency list once it proves good.
 
-## Integrate and verify
+## Project block
 
-Add or update the small [managed agent block](references/agent-block.md) in AGENTS.md,
-preserving all other content. Integrate CLAUDE.md only for Claude: retain its existing
-instructions and add a managed pointer to AGENTS.md if needed. Do not append duplicate
-routing blocks or weaken project-specific approval, testing, or deployment rules.
+A project needs nothing installed. When the user asks to route one project through
+the workflow, add the block from [agent-block.md](references/agent-block.md) to its
+`AGENTS.md`.
 
-Verify selected skill names, complete references, licenses, duplicate discovery,
-relative aliases, manager refs, and gstack's source/config/generated helpers. Map
-short lifecycle names to actual registered names such as `gstack-qa`; distinguish
-astack's `workflow-verify` from unrelated skills named `verify`. Reuse project-specific
-skills such as screen-check or agent-capability only when that project requires them.
-Engineering review is an autoplan phase at this pin, not a missing standalone skill.
-Inspect nonzero helper diagnostics rather than ignoring them. This pin's setup status
-can flag the unused unprefixed alternative in review's conditional QA link; verify
-the applicable prefixed target and record that diagnostic explicitly. Other failures
-remain blockers for their affected capabilities.
-
-Write a concise `.agents/astack-setup.md` record: astack revision, selected upstream
-commits, CLI/tool versions, effective skill paths, declared patches, content identities,
-capability results, and remaining conflicts. Exclude credentials and private session
-content; prefer project-relative paths and timezone-aware verification timestamps.
-A rerun compares existing content to the recorded/pristine identities and
-changes only missing or explicitly updated entries; an edited managed file stops
-that replacement with a diff. Leave unrelated files, locks, and settings intact.
-
-Finish with installed/reused/blocked items and tell the user to start a fresh agent
-session. Cloning astack alone does not run setup. Do not start a product interview,
-TDD cycle, paid model call, deployment, or feature build while installing its skills.
+Setup installs skills. Product interviews, builds, paid calls and deploys belong to
+later sessions.

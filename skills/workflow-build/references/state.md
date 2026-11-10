@@ -20,6 +20,8 @@ Keep these sections in the record; add rows as actual tasks are discovered.
 - **Tasks:** the ledger below, plus each task's saved worker brief.
 - **Decisions and amendments:** user changes, shared contract changes, rationale,
   affected tasks/workers, and unresolved questions.
+- **Approvals:** each approval and pre-approval the user gave, with its exact scope
+  and time, and the questions still waiting for the user.
 - **Events and handoffs:** starts, completions, worker reports, review findings,
   correction rounds, integration attempts, and observed failures with timestamps.
 - **Verification and final handoff:** commands, working directories, exit statuses,

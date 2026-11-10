@@ -1,41 +1,34 @@
 ---
 name: workflow-maintain
-description: Create or improve shared skills, publish requested changes, and update selected project copies.
+description: Create or improve a shared astack skill, run a retro on recent sessions, bring a lesson back to the source, publish it and update the installed copies. Use when the user asks to change, fix or add a workflow skill.
 ---
 
 # Maintain shared skills
 
-Locate the shared source repository and confirm its Git remote, README, and working
-tree before editing. A skill installed in a project is a copy: do not mistake that
-project's repository for the shared source. Preserve unrelated changes.
+The astack repository is the source. The skills installed on a machine are copies.
 
-Read the affected skill and its references. Make the smallest change that addresses
-the request. Keep project-specific commands and architecture rules in the project.
-Keep credentials, private client material, and machine-specific paths out of shared files.
-Preserve existing skill names unless a rename is requested, and check callers before
-removing a referenced file. Prefer improving an existing skill over adding an overlap.
-
-For a new skill, create `skills/<name>/SKILL.md` with YAML frontmatter containing
-`name` and a description of when to use it. Match the folder name to the declared
-name using lowercase letters, digits, and hyphens. Add supporting files only when
-they serve the skill; avoid unrequested install machinery and placeholder scaffolding.
-For upstream dependencies, update workflow-setup's central dependency list, verify
-the pinned source and license, and test its setup recipe. Do not scatter pins across
-individual skills or silently upgrade consuming projects.
-
-Check frontmatter, relative links, and consistency with the requested behavior.
-Walk through a representative request to catch missing steps or unintended actions.
-Confirm referenced files travel with the skill folder. Update README usage examples
-when behavior changes, and run `git diff --check`. Report whether validation was
-static inspection, a copy check, or an actual agent trial.
-
-If publishing was requested, review the final diff, commit only the intended files,
-and push to the agreed remote and branch following repository rules. Never force-push.
-If the push is rejected, inspect the remote changes before reconciling them; report
-an unresolved failure rather than claiming publication succeeded.
-
-Update project copies only for the projects requested. Review differences and
-preserve local customizations before replacing files. Wait for sessions using those
-files to finish, then copy the selected folders and references. Check the resulting
-diff and use a fresh session to load the update. Updating shared source does not
-automatically update project copies. This procedure also applies to this skill itself.
+1. **Find the source.** Locate the astack checkout and confirm its remote and a clean
+   working tree. Keep unrelated changes.
+2. **Retro, when the user asks what to improve.** Follow [retro.md](references/retro.md).
+3. **Bring lessons back.** When the fix was made in an installed copy or a project's
+   own skill, diff it against the source and move the general rule into the source. Project commands,
+   architecture rules, credentials and machine paths stay in the project.
+4. **Edit.** Load `writing-for-agents` and `write-skill` first. Make the smallest
+   change that covers the request. Write numbered steps with a clear done condition,
+   state the wanted behavior, and cut any sentence the agent would follow anyway.
+   Improve an existing skill before adding one that overlaps it.
+5. **New skill.** Create `skills/<name>/SKILL.md` with `name` and a `description`
+   that says when to use it. The folder name matches `name`, in lowercase letters,
+   digits and hyphens. List it in the README.
+6. **Upstream dependency.** Edit only `workflow-setup/references/dependencies.json`.
+   Confirm the pinned revision contains the skill and its license, then test the
+   setup recipe.
+7. **Check.** Frontmatter parses, relative links resolve, referenced files sit inside
+   the skill folder, and `git diff --check` is clean. Walk one real request through
+   the changed skill. Report whether you inspected it, copied it or ran an agent on it.
+8. **Publish when asked.** Review the diff, commit the intended files and push to the
+   agreed branch. If the remote rejects the push, read the remote changes and report
+   it. Force-push stays off.
+9. **Update the machine when asked.** Rerun the astack install command from
+   `workflow-setup`, then start a fresh session. A changed pin needs a full
+   `workflow-setup` run.

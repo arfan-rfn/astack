@@ -1,71 +1,86 @@
 ---
 name: workflow-cycle
-description: Route a development request through clarification, planning, constraints, orchestrated TDD, proof, review, shipping, and authorized deployment using installed skills.
+description: Route a feature, fix or release request to the right stage and installed skill by task size, from a vague idea through plan, build, proof, review, ship and deploy. Use at the start of any development request.
 ---
 
 # Development lifecycle
 
-Read project instructions and the current plan/state first. Identify the stage and
-scope requested; continue that stage rather than replaying the whole lifecycle.
-Use the installed skills below by reading/invoking their actual entrypoints. A stage
-is not complete just because its name appears in a checklist. Record outputs and
-any missing capability. If dependencies are absent, use workflow-setup when setup
-is authorized; do not pretend an unavailable skill ran.
+1. Read the project instructions and any plan or build-state file for this work.
+2. Size the task with the tier table and name the tier in your first reply.
+3. Run the first unfinished stage of that tier by invoking its skill.
+4. End each stage reply with `Next: <skill>` and one reason. When the work outgrows
+   its tier, name the new tier and continue from its first unfinished stage.
 
-Load `unslop` before authored prose. Follow its writing rules while preserving code,
-quotes, evidence, and exact required tool/report formats.
+Report a skill that is not installed as missing. `workflow-setup` repairs it when the
+user asks. Load `unslop` before writing prose.
 
-## Clarify and plan
+## Tiers
 
-- **Vague idea:** use `grill-me`/`grilling` to settle product decisions. Inspect the
-  codebase and research facts rather than making the user supply discoverable facts.
-  Observe the user's question pacing. Skip a fresh interview for an already approved plan.
-- **Problem and approach:** use gstack `office-hours`, then save its design/plan output.
-- **Plan review:** use `autoplan`, or explicitly selected `plan-ceo-review`,
-  `plan-design-review`, and `plan-devex-review`. At the selected upstream revision,
-  standalone `plan-eng-review` is retired; its engineering methodology is retained
-  in autoplan's engineering phase. Route engineering review through autoplan.
-  Autoplan already orchestrates its applicable reviews; do not repeat them automatically afterward.
-  Resolve its owner decisions and approval gate before implementation. Include test
-  seams, actor journeys, awkward inputs, prerequisites, and release dependencies.
-- **Project quality bar:** read existing CONSTRAINTS.md. Use
-  `constraint-driven-development` if it is missing or the user wants to change the
-  bar. This is project setup, not an interview to repeat on every feature. Retain
-  project-specific design/category-baseline requirements for UI work.
+| Tier | Fits | Stages in order |
+|---|---|---|
+| Trivial | One file, behavior unchanged | `verify`, `ship` |
+| Small | One to three files, behavior changes, no new interface | `diagnosing-bugs` for a bug, `tdd`, `verify`, `review`, `ship` |
+| Medium | A feature inside existing boundaries | `office-hours`, `autoplan`, `tdd`, `verify`, `observability-and-instrumentation`, `review`, `qa`, `ship`, `land-and-deploy` |
+| Large | A new boundary, interface or service, or an idea that takes more than two sentences to state | `grill-me`, `office-hours`, `autoplan`, `workflow-build`, `workflow-verify`, `qa`, `workflow-handoff`, then in a later session `review`, `cso`, `ship`, `land-and-deploy`, `canary` |
+
+A repository without `CONSTRAINTS.md` runs `constraint-driven-development` once,
+before its first build. Later features read the file.
+
+## Plan
+
+- **Research first.** Find facts in the codebase and on the web yourself. Ask the user
+  for product decisions only.
+- **One decision at a time.** Ask each open decision as its own question, with your
+  recommendation and the real cost of each option.
+- **Plan reviews.** `autoplan` runs the CEO, design, engineering and developer
+  experience reviews, so the plan is reviewed once. Run `plan-ceo-review`,
+  `plan-eng-review`, `plan-design-review` or `plan-devex-review` alone when the user
+  names it.
+- **A later release of an approved plan** starts at plan review. It skips `grill-me`
+  and `office-hours`.
+- **Screens.** For UI work, show a mockup of every screen the plan touches and open it
+  for the user. Building starts after the user approves the mockup.
+- **Interfaces.** Use `codebase-design` and `api-and-interface-design` when the plan
+  adds a module boundary or public interface.
+
+The plan is ready when it holds numbered acceptance journeys with awkward inputs, the
+public test seams, a prerequisites list, the release dependency order and the approved
+mockups. Then write the build prompt for a fresh session.
 
 ## Build and prove
 
-Use `workflow-build` as the orchestrator: graph dependencies, assign small parallel
-worker tasks, keep a persistent ledger, review results, integrate, and recover on
-restart. Workers use the installed `tdd` skill for behavior changes: agree public
-seams, observe one failing test, implement enough to pass, and repeat vertically.
-Seams explicitly covered by the user's approved plan are already agreed; do not
-re-ask workers' approval questions. Use `codebase-design` when interface design needs
-it. A prose-only change does not require invented behavior tests.
+- **Large builds** run in a fresh session with `workflow-build`. Smaller tiers build
+  in the current session with `tdd`.
+- **Bugs.** Reproduce the bug with `diagnosing-bugs` before changing code. Use
+  `investigate` when the user wants a written root cause.
+- **Proof.** `verify` runs the repository checks until green. `workflow-verify` adds
+  the acceptance evidence. `qa` walks each journey on the real CLI, API, browser or
+  device. Passing unit tests leave the journeys unproven.
+- **Stop for the manual test.** Finish the build with `workflow-handoff` and wait.
+  The user's change requests after testing go through `tdd` and `verify` on the same
+  branch.
 
-Run project check lanes through `workflow-verify`. Walk the plan's actual journeys
-with gstack `qa` on the relevant CLI/API/browser/native interfaces. Review changed
-screens against the project's design rules. Real provider sends, paid/native checks,
-and production operations need the applicable authorization and capability; otherwise
-name the missing proof. Unit tests alone do not establish that a feature works.
+## Review, ship and land
 
-At build completion, use `workflow-handoff` and stop for the project's manual test
-or review gate. The build stage does not automatically authorize shipping. Preserve
-workspaces and evidence needed by the next session.
+Each of these stages starts on the user's word for this release.
 
-## Review, ship, and land
+- **Review.** Run `review` on the real diff. Fix accepted findings, rerun the affected
+  checks and journeys, and send findings outside the release to the project's TODO
+  list. One review round and one fix round.
+- **Ship.** Run `ship`, then watch every pull request from the moment it opens. Ship
+  is done when CI is green on the head commit of every pull request. Fix a failing
+  check and report a red check as red.
+- **Land.** Run `land-and-deploy` in the project's deploy order, for example the API
+  before its clients. Confirm the deployed revision and one live journey, then run
+  `canary`. Report pending store releases and missing production proof.
+- **Clean up.** After the merge, remove the worktrees and branches this work created.
 
-When requested, run gstack `review` on the actual changes. Fix accepted findings,
-repeat affected tests and `qa` journeys, and re-review changed behavior when needed.
-The cycle can return to building; keep later evidence tied to the corrected revision.
+## Lessons
 
-Use gstack `ship` for the requested release once its required checks/reviews are
-satisfied. Ship creates/pushes the reviewable release or PR according to project
-policy; do not treat it as evidence of production deployment. Follow host rules for
-PR links and asynchronous check waits.
+When the user corrects a workflow miss, fix the rule in the astack source with
+`workflow-maintain`. An edit to an installed copy is lost on the next update.
+After a release, or when the user asks what to improve, `workflow-maintain` runs a
+retro on the recent sessions.
 
-Run `land-and-deploy` only with authorization and after required gates. Respect
-cross-repo compatibility and deployment order rather than assuming every repository
-can merge at once. Verify the actual deployed revision and live health/journeys,
-then the applicable canary. Report pending store releases, missing production proof,
-and incomplete CI explicitly. Update the state and final handoff with exact results.
+Matt Pocock's `handoff` passes work to another model or tool. `workflow-handoff`
+reports a finished build to the user.
