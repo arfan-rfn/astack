@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "gstack": {
+    "repository": "https://github.com/garrytan/gstack.git",
+    "revision": "b6155921a564ba9ec2470fd2cb3894c05e2c2d13",
+    "version": "1.98.0.0"
+  },
+  "skills_cli": {
+    "package": "skills",
+    "version": "1.7.6",
+    "integrity": "sha512-dAee29yRGin7ub6VHwmifLEfHrysGD41yq4RkY0gg7QQh0wyQKWfhiORGb/r6uNpKWc9A1GY8yowV07Lh+4rCg=="
+  }
+}

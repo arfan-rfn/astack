@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "label": "example-host",
+  "projects": {
+    "example": {"path": "/path/to/checkout", "drained": false}
+  },
+  "capabilities": {
+    "python": ["python3", "--version"],
+    "git": ["git", "--version"]
+  },
+  "discovery_roots": []
+}

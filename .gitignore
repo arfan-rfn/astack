@@ -1,0 +1,8 @@
+.local/
+__pycache__/
+*.pyc
+.venv/
+.workflow/
+dist/
+*.egg-info/
+/PLAN.md
