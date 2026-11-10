@@ -1,5 +1,0 @@
-{
-  "schema": 1,
-  "skills": ["workflow-build", "workflow-verify", "workflow-handoff"],
-  "project_owned": ["architecture", "schema generation", "Scala conformance", "Python and frontend checks"]
-}

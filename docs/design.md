@@ -3,6 +3,18 @@
 The shared source is named **astack**, per the implementation-session rename.
 The original PLAN.md is retained as the rollout contract, including its former name.
 
+## Keep the source small
+
+Use one core profile until a project needs a genuinely different skill selection.
+Stack-specific commands and rules belong in project descriptors and documents.
+Do not add placeholder profiles, speculative adapters, frameworks, or abstraction
+layers. Keep dependencies at zero for the core CLI. Retain regression tests and
+recovery checks; reduce duplicated configuration and prose first.
+
+The initial release's stack-labelled profiles selected identical skills. New source
+uses only `core`; projects pinned to an older commit retain their original profiles.
+When updating those projects, stage a descriptor with `"profile": "core"`.
+
 ## Runtime and dependency ownership
 
 Use Python 3.11+ and its standard library on POSIX hosts. This avoids a runtime
