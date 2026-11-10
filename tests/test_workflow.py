@@ -180,6 +180,29 @@ class WorkflowTests(unittest.TestCase):
             with self.assertRaisesRegex(w.WorkflowError, "drained"):
                 self.p.activate(self.files())
 
+    def test_unmerged_git_entries_survive_activation_refusal(self):
+        self.install()
+        def git(*args):
+            return w.run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                          *args], cwd=self.root)
+        git("add", ".")
+        git("commit", "-qm", "baseline")
+        git("switch", "-c", "left")
+        (self.root / "README.md").write_text("left\n")
+        git("commit", "-am", "left")
+        git("switch", "-c", "right", "HEAD~1")
+        (self.root / "README.md").write_text("right\n")
+        git("commit", "-am", "right")
+        with self.assertRaises(w.WorkflowError):
+            git("merge", "left")
+        conflict = (self.root / "README.md").read_bytes()
+        index = git("ls-files", "-u")
+        self.assertTrue(index)
+        with self.p.lock(), self.assertRaisesRegex(w.WorkflowError, "Unmerged Git entries"):
+            self.p.activate(self.files(self.new_revision()))
+        self.assertEqual(conflict, (self.root / "README.md").read_bytes())
+        self.assertEqual(index, git("ls-files", "-u"))
+
     def test_candidate_staging_and_rollback_preserve_unrelated_files(self):
         self.install()
         next_rev = self.new_revision()
