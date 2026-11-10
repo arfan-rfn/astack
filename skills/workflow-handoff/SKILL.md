@@ -5,7 +5,7 @@ description: Hand off verified work with exact revisions, release boundaries, re
 
 # Evidence handoff
 
-Read the project descriptor and saved task state. Report what changed, why, the
+Read the project's instructions and saved task state. Report what changed, why, the
 consumed revisions, checks actually run, and material limitations. Name any reused
 checks and their applicable inputs. Do not imply an untested host or adapter passed.
 
@@ -13,7 +13,7 @@ Record each release's readiness separately. List pending CI, unfinished integrat
 journeys, optional platform proof, governance decisions and rollout exceptions with
 the next action. Preserve the project's normal review/ship/deploy separation.
 
-Before an update, stage a candidate and verify it in a disposable checkout. Activate
-only after affected sessions drain. Retain the previous verified release and owned
-entry backup, exercise rollback, and record the outcome. Never update a running
-session's skill files or roll back unrelated user settings and changes.
+When updating shared skills, record the source Git revision and review the diff
+before copying files. Preserve local edits and wait for sessions using those files
+to finish. Keep the previous version recoverable through Git or a backup. Never
+overwrite unrelated project rules or user settings.
