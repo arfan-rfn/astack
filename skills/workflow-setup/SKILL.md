@@ -66,7 +66,7 @@ source or overwrite other local customizations. Keep the upstream license with i
 ## Prepare gstack with its own setup
 
 Do not install gstack by copying its Markdown or through the generic skills CLI.
-Fetch the exact declared commit into `.agents/astack-tools/gstack`; verify its origin
+Fetch the exact declared commit into `.claude/skills/gstack`; verify its origin
 and revision. Read that revision's setup before running it. Keep its license and
 supporting binaries/resources intact.
 
@@ -76,7 +76,10 @@ Scope setup's provider and state roots to this project:
 instructions to relocate an agent's credentials or change its launch environment.
 Use stock `./setup --host codex --global --prefix --no-team --no-harness-auto`,
 or `--host claude`; run each separately for both agents. Here `--global` is scoped
-by those provider roots. Never run it with unverified roots pointing to user globals.
+by those provider roots and the project-local source layout. At the selected pin,
+CLAUDE_CONFIG_DIR alone does not redirect Claude skill registration: the source must
+live under the project's `.claude/skills/gstack`, not an arbitrary cache directory.
+Never run it with unverified roots or source paths pointing to user globals.
 Disable both `auto_upgrade` and `update_check` using this revision's gstack-config.
 Do not change the runtime provider/model. Record any setup-time rendering profile.
 
