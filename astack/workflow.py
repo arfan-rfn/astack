@@ -1,4 +1,5 @@
 """Small, dependency-free wrapper around project snapshots, Git and upstream setup."""
+
 from __future__ import annotations
 
 import argparse
@@ -9,15 +10,14 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path, PurePosixPath
 import platform
 import re
-import shutil
 import stat
 import subprocess
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from pathlib import Path, PurePosixPath
 from uuid import uuid4
 
 VERSION = "0.1.0"
@@ -31,7 +31,7 @@ class WorkflowError(Exception):
 
 
 def now():
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def digest(data):
@@ -72,8 +72,10 @@ def atomic(path, data, mode=0o600):
 def run(argv, cwd=None, env=None):
     result = subprocess.run(argv, cwd=cwd, env=env, capture_output=True, check=False)
     if result.returncode:
-        raise WorkflowError(f"Command failed ({result.returncode}): {argv[0]}\n"
-                            + (result.stdout + result.stderr).decode(errors="replace")[-3000:])
+        raise WorkflowError(
+            f"Command failed ({result.returncode}): {argv[0]}\n"
+            + (result.stdout + result.stderr).decode(errors="replace")[-3000:]
+        )
     return result.stdout
 
 
@@ -81,7 +83,12 @@ def relative(value):
     if not isinstance(value, str) or not value or "\\" in value:
         raise WorkflowError(f"Invalid relative path: {value!r}")
     p = PurePosixPath(value)
-    if not p.parts or p.is_absolute() or any(x in ("..", ".git") for x in p.parts) or str(p) != value:
+    if (
+        not p.parts
+        or p.is_absolute()
+        or any(x in ("..", ".git") for x in p.parts)
+        or str(p) != value
+    ):
         raise WorkflowError(f"Unsafe relative path: {value}")
     return p
 
@@ -104,8 +111,10 @@ def entry(path):
         return None
     if not path.is_file():
         raise WorkflowError(f"Expected file, found directory or special file: {path}")
-    return {"data": base64.b64encode(path.read_bytes()).decode(),
-            "mode": stat.S_IMODE(path.stat().st_mode)}
+    return {
+        "data": base64.b64encode(path.read_bytes()).decode(),
+        "mode": stat.S_IMODE(path.stat().st_mode),
+    }
 
 
 def file_entry(data, mode=0o644):
@@ -148,8 +157,14 @@ def descriptor(root):
     if len(skills) != len(set(skills)) or any(not NAME.fullmatch(s) for s in skills):
         raise WorkflowError("Select a nonempty list of unique skill names")
     adapters = d.get("adapters", {})
-    if not isinstance(adapters, dict) or not adapters or any(k not in ("codex", "claude") or v not in ("symlink", "copy")
-                           for k, v in adapters.items()):
+    if (
+        not isinstance(adapters, dict)
+        or not adapters
+        or any(
+            k not in ("codex", "claude") or v not in ("symlink", "copy")
+            for k, v in adapters.items()
+        )
+    ):
         raise WorkflowError("Adapters must select codex/claude and symlink/copy")
     if not isinstance(d.get("documents", []), list):
         raise WorkflowError("documents must be an array")
@@ -187,7 +202,9 @@ class Project:
             try:
                 fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError as exc:
-                raise WorkflowError("Another operation holds this project's activation lock") from exc
+                raise WorkflowError(
+                    "Another operation holds this project's activation lock"
+                ) from exc
             yield
 
     def leases(self):
@@ -198,8 +215,13 @@ class Project:
         if self.leases():
             raise WorkflowError("Active session leases block activation; close them explicitly")
         mapping = self.host.get("projects", {}).get(self.d["project"], {})
-        if mapping.get("drained") is not True or Path(mapping.get("path", "")).resolve() != self.root:
-            raise WorkflowError("Host descriptor must declare this exact checkout drained before activation")
+        if (
+            mapping.get("drained") is not True
+            or Path(mapping.get("path", "")).resolve() != self.root
+        ):
+            raise WorkflowError(
+                "Host descriptor must declare this exact checkout drained before activation"
+            )
 
     def managed(self):
         p = self.root / MANIFEST
@@ -218,12 +240,25 @@ class Project:
                     if backup.exists():
                         old = read_json(backup).get(name)
                         if old and actual and "data" in old and "data" in actual:
-                            before = base64.b64decode(old["data"]).decode(errors="replace").splitlines(True)
-                            after = base64.b64decode(actual["data"]).decode(errors="replace").splitlines(True)
-                            message += "\n" + "".join(difflib.unified_diff(before, after, f"locked/{name}", name))
+                            before = (
+                                base64.b64decode(old["data"])
+                                .decode(errors="replace")
+                                .splitlines(True)
+                            )
+                            after = (
+                                base64.b64decode(actual["data"])
+                                .decode(errors="replace")
+                                .splitlines(True)
+                            )
+                            message += "\n" + "".join(
+                                difflib.unified_diff(before, after, f"locked/{name}", name)
+                            )
                     findings.append(message)
-            owned_roots = {"/".join(n.split("/")[:3]) for n in managed["files"]
-                           if n.startswith((".agents/skills/", ".claude/skills/"))}
+            owned_roots = {
+                "/".join(n.split("/")[:3])
+                for n in managed["files"]
+                if n.startswith((".agents/skills/", ".claude/skills/"))
+            }
             for name in sorted(owned_roots):
                 folder = safe_path(self.root, name)
                 if folder.is_symlink() or not folder.is_dir():
@@ -235,7 +270,11 @@ class Project:
         if files:
             owned = managed["files"] if managed else {}
             for name in files:
-                if name not in owned and name != MANIFEST and entry(safe_path(self.root, name)) is not None:
+                if (
+                    name not in owned
+                    and name != MANIFEST
+                    and entry(safe_path(self.root, name)) is not None
+                ):
                     if name == "workflow.json":
                         continue  # descriptor authoring is the explicit initial opt-in
                     findings.append(f"Unmanaged collision: {name}")
@@ -247,8 +286,10 @@ class Project:
 
     def doctor(self):
         findings = [{"required": True, "message": x} for x in self.conflicts()]
+
         def add(message, required=True):
             findings.append({"required": required, "message": message})
+
         m = self.managed()
         if not m:
             add("No managed snapshot; run bootstrap")
@@ -283,14 +324,22 @@ class Project:
                     continue
                 name = match[1]
                 prior = names.get(name)
-                alias = (skill.parent == self.root / ".claude/skills" and skill.name == name
-                         and self.d["adapters"].get("claude") == "copy"
-                         and name in self.d["skills"] and m
-                         and f".claude/skills/{name}/SKILL.md" in m["files"])
+                alias = (
+                    skill.parent == self.root / ".claude/skills"
+                    and skill.name == name
+                    and self.d["adapters"].get("claude") == "copy"
+                    and name in self.d["skills"]
+                    and m
+                    and f".claude/skills/{name}/SKILL.md" in m["files"]
+                )
                 if prior and md.resolve() != prior.resolve() and not alias:
                     add(f"Duplicate discovered name {name}: {prior} and {md}")
                 names.setdefault(name, md)
-                for link in re.findall(r"\]\(([^)#]+)(?:#[^)]*)?\)", content) if name in self.d["skills"] else []:
+                for link in (
+                    re.findall(r"\]\(([^)#]+)(?:#[^)]*)?\)", content)
+                    if name in self.d["skills"]
+                    else []
+                ):
                     if "://" in link or link.startswith("#"):
                         continue
                     target = md.parent / link
@@ -302,7 +351,9 @@ class Project:
                 add(f"Selected skill not discoverable: {name}")
             if "claude" in self.d["adapters"]:
                 alias = self.root / ".claude/skills" / name / "SKILL.md"
-                if not alias.is_file() or (canonical.is_file() and alias.read_bytes() != canonical.read_bytes()):
+                if not alias.is_file() or (
+                    canonical.is_file() and alias.read_bytes() != canonical.read_bytes()
+                ):
                     add(f"Adapter content mismatch: {name}")
         capabilities = self.host.get("capabilities", {})
         capability_results = {}
@@ -310,17 +361,28 @@ class Project:
             probe = capabilities.get(name)
             available = False
             if isinstance(probe, list) and probe and all(isinstance(s, str) for s in probe):
-                try:
-                    available = subprocess.run(probe, cwd=self.root, stdout=subprocess.DEVNULL,
-                                               stderr=subprocess.DEVNULL, timeout=10).returncode == 0
-                except (OSError, subprocess.TimeoutExpired):
-                    pass
+                with contextlib.suppress(OSError, subprocess.TimeoutExpired):
+                    available = (
+                        subprocess.run(
+                            probe,
+                            cwd=self.root,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            timeout=10,
+                        ).returncode
+                        == 0
+                    )
             if not available:
                 add(f"Capability unavailable: {name}", requirement == "required")
             capability_results[name] = {"available": available, "requirement": requirement}
-        return {"schema": 1, "project": self.d["project"], "revision": self.d["bundle"]["revision"],
-                "ok": not any(f["required"] for f in findings), "findings": findings,
-                "capabilities": capability_results}
+        return {
+            "schema": 1,
+            "project": self.d["project"],
+            "revision": self.d["bundle"]["revision"],
+            "ok": not any(f["required"] for f in findings),
+            "findings": findings,
+            "capabilities": capability_results,
+        }
 
     def recover(self):
         journal = self.local / "journal.json"
@@ -332,7 +394,9 @@ class Project:
         for name in txn["before"]:
             actual = entry(safe_path(self.root, name))
             if actual not in (txn["before"][name], txn["after"].get(name)):
-                raise WorkflowError(f"Recovery conflicts with a concurrent edit: {name}; journal retained")
+                raise WorkflowError(
+                    f"Recovery conflicts with a concurrent edit: {name}; journal retained"
+                )
         for name, item in txn["before"].items():
             put(self.root, name, item)
         journal.unlink()
@@ -345,7 +409,10 @@ class Project:
         incoming = json.loads(base64.b64decode(files[MANIFEST]["data"]))
         desc = json.loads(base64.b64decode(files["workflow.json"]["data"]))
         identities = {k: identity(v) for k, v in files.items() if k != MANIFEST}
-        if incoming.get("files") != identities or incoming.get("revision") != desc["bundle"]["revision"]:
+        if (
+            incoming.get("files") != identities
+            or incoming.get("revision") != desc["bundle"]["revision"]
+        ):
             raise WorkflowError("Candidate content differs from its resolved manifest")
         conflicts = self.conflicts(files)
         if conflicts:
@@ -366,8 +433,11 @@ class Project:
             # Validate activated content and references before releasing the gate.
             self.d = descriptor(self.root)
             report = self.doctor()
-            errors = [f["message"] for f in report["findings"]
-                      if f["required"] and not f["message"].startswith("Interrupted activation")]
+            errors = [
+                f["message"]
+                for f in report["findings"]
+                if f["required"] and not f["message"].startswith("Interrupted activation")
+            ]
             if errors:
                 raise WorkflowError("\n".join(errors))
             atomic(self.local / "installed.json", encoded(files))
@@ -389,13 +459,17 @@ def snapshot(project, source, revision):
         raise WorkflowError("Source did not resolve the requested commit")
     d = json.loads(json.dumps(project.d))
     d["bundle"]["revision"] = revision
+
     def blob(name):
         return run(["git", "show", f"{revision}:{name}"], cwd=source)
+
     profile = json.loads(blob(f"profiles/{d['profile']}.json"))
     if not set(d["skills"]).issubset(profile["skills"]):
         raise WorkflowError("Selected skills are not part of the selected profile")
-    files = {"workflow.json": file_entry(encoded(d)),
-             "tools/workflow.py": file_entry(blob("astack/workflow.py"), 0o755)}
+    files = {
+        "workflow.json": file_entry(encoded(d)),
+        "tools/workflow.py": file_entry(blob("astack/workflow.py"), 0o755),
+    }
     for name in d["skills"]:
         prefix = f"skills/{name}/"
         listing = run(["git", "ls-tree", "-r", "-z", revision, "--", prefix], cwd=source)
@@ -408,7 +482,7 @@ def snapshot(project, source, revision):
             path = rawpath.decode()
             if kind != "blob" or mode not in ("100644", "100755"):
                 raise WorkflowError(f"Only regular portable skill assets are supported: {path}")
-            rel = path[len(prefix):]
+            rel = path[len(prefix) :]
             relative(rel)
             content = run(["git", "cat-file", "blob", oid], cwd=source)
             files[f".agents/skills/{name}/{rel}"] = file_entry(content, int(mode, 8) & 0o777)
@@ -419,8 +493,13 @@ def snapshot(project, source, revision):
             raise WorkflowError(f"Source does not contain skill {name}")
         if d["adapters"].get("claude") == "symlink":
             files[f".claude/skills/{name}"] = {"link": f"../../.agents/skills/{name}"}
-    manifest = {"schema": 1, "revision": revision, "source": d["bundle"].get("repository"),
-                "adapter_version": VERSION, "files": {k: identity(v) for k, v in files.items()}}
+    manifest = {
+        "schema": 1,
+        "revision": revision,
+        "source": d["bundle"].get("repository"),
+        "adapter_version": VERSION,
+        "files": {k: identity(v) for k, v in files.items()},
+    }
     files[MANIFEST] = file_entry(encoded(manifest))
     return files
 
@@ -436,17 +515,27 @@ def inventory(roots):
         for md in sorted(root.glob("*/SKILL.md")):
             content = md.read_bytes()
             match = re.search(rb"^name:\s*(.+)$", content, re.M)
-            row = {"path": str(md.parent), "resolved_path": str(md.parent.resolve()),
-                   "name": match[1].decode() if match else None, "sha256": digest(content),
-                   "symlink": md.parent.is_symlink(), "owner": "unclassified"}
+            row = {
+                "path": str(md.parent),
+                "resolved_path": str(md.parent.resolve()),
+                "name": match[1].decode() if match else None,
+                "sha256": digest(content),
+                "symlink": md.parent.is_symlink(),
+                "owner": "unclassified",
+            }
             try:
                 row["revision"] = run(["git", "rev-parse", "HEAD"], cwd=md.parent).decode().strip()
                 row["status"] = run(["git", "status", "--porcelain"], cwd=md.parent).decode()
             except WorkflowError:
                 row["revision"] = None
             results.append(row)
-    return {"schema": 1, "created_at": now(), "os": platform.system(),
-            "architecture": platform.machine(), "skills": results}
+    return {
+        "schema": 1,
+        "created_at": now(),
+        "os": platform.system(),
+        "architecture": platform.machine(),
+        "skills": results,
+    }
 
 
 def main(argv=None):
@@ -459,10 +548,14 @@ def main(argv=None):
     inv.add_argument("roots", nargs="+", type=Path)
     for command in ("bootstrap", "doctor", "update", "rollback", "run", "session-close"):
         p = sub.add_parser(command)
-        p.add_argument("--project", required=True, help="Identifier mapped in host, or checkout path")
+        p.add_argument(
+            "--project", required=True, help="Identifier mapped in host, or checkout path"
+        )
         p.add_argument("--json", action="store_true")
         if command in ("bootstrap", "update"):
-            p.add_argument("--source", type=Path, help="Local Git source checkout, exact commits only")
+            p.add_argument(
+                "--source", type=Path, help="Local Git source checkout, exact commits only"
+            )
             p.add_argument("--candidate", help="Full immutable Git commit")
         if command == "bootstrap":
             p.add_argument("--dry-run", action="store_true")
@@ -487,11 +580,20 @@ def main(argv=None):
             return 0 if result["ok"] else 1
         if args.command == "bootstrap" and args.dry_run:
             conflicts = p.conflicts()
-            result = {"dry_run": True, "revision": args.candidate or p.d["bundle"]["revision"],
-                      "project": p.d["project"], "conflicts": conflicts,
-                      "actions": ["prepare locked snapshot", "verify owned content and references",
-                                  "require drained target", "preserve owned entries", "activate snapshot"],
-                      "active_sessions": len(p.leases())}
+            result = {
+                "dry_run": True,
+                "revision": args.candidate or p.d["bundle"]["revision"],
+                "project": p.d["project"],
+                "conflicts": conflicts,
+                "actions": [
+                    "prepare locked snapshot",
+                    "verify owned content and references",
+                    "require drained target",
+                    "preserve owned entries",
+                    "activate snapshot",
+                ],
+                "active_sessions": len(p.leases()),
+            }
             if args.source:
                 files = snapshot(p, args.source, result["revision"])
                 result["files"] = sorted(files)
@@ -526,16 +628,28 @@ def main(argv=None):
                     observed = subprocess.run(probe, capture_output=True, timeout=10)
                     if observed.returncode == 0:
                         runtime_version = observed.stdout.decode(errors="replace").strip()[:500]
-                session = {"schema": 1, "created_at": now(), "token": token,
-                           "project_revision": run(["git", "rev-parse", "HEAD"], cwd=p.root).decode().strip(),
-                           "bundle_revision": p.d["bundle"]["revision"], "manifest": p.managed(),
-                           "adapter_version": VERSION, "python": platform.python_version(),
-                           "runtime_identity": {"provider": declared.get("provider"),
-                                                "model": declared.get("model"),
-                                                "effort": declared.get("effort"),
-                                                "version": runtime_version,
-                                                "selection_evidence": "host-declared; null means unobserved"},
-                           "runtime": command[0], "capabilities": report, "pid": os.getpid()}
+                session = {
+                    "schema": 1,
+                    "created_at": now(),
+                    "token": token,
+                    "project_revision": run(["git", "rev-parse", "HEAD"], cwd=p.root)
+                    .decode()
+                    .strip(),
+                    "bundle_revision": p.d["bundle"]["revision"],
+                    "manifest": p.managed(),
+                    "adapter_version": VERSION,
+                    "python": platform.python_version(),
+                    "runtime_identity": {
+                        "provider": declared.get("provider"),
+                        "model": declared.get("model"),
+                        "effort": declared.get("effort"),
+                        "version": runtime_version,
+                        "selection_evidence": "host-declared; null means unobserved",
+                    },
+                    "runtime": command[0],
+                    "capabilities": report,
+                    "pid": os.getpid(),
+                }
                 lease = p.local / "sessions" / f"{token}.json"
                 atomic(lease, encoded(session))
             elif args.command == "rollback":
@@ -563,7 +677,9 @@ def main(argv=None):
                     print("Snapshot already verified; no changes")
                     return 0
                 else:
-                    raise WorkflowError("Provide --source with the locked Git checkout; no implicit latest fetch")
+                    raise WorkflowError(
+                        "Provide --source with the locked Git checkout; no implicit latest fetch"
+                    )
                 if args.command == "update":
                     if not args.candidate:
                         raise WorkflowError("update requires --candidate <full commit>")
@@ -571,7 +687,11 @@ def main(argv=None):
                     print(f"Candidate staged at {candidate}; stable project unchanged")
                 else:
                     changed = p.activate(files)
-                    print("Snapshot activated and verified" if changed else "Snapshot already verified; no changes")
+                    print(
+                        "Snapshot activated and verified"
+                        if changed
+                        else "Snapshot already verified; no changes"
+                    )
                 return 0
         # The lock is released, but the durable lease blocks activation throughout the child run.
         try:
@@ -583,7 +703,15 @@ def main(argv=None):
         finally:
             with p.lock():
                 lease.unlink(missing_ok=True)
-    except (WorkflowError, OSError, KeyError, TypeError, ValueError, AttributeError, subprocess.TimeoutExpired) as exc:
+    except (
+        WorkflowError,
+        OSError,
+        KeyError,
+        TypeError,
+        ValueError,
+        AttributeError,
+        subprocess.TimeoutExpired,
+    ) as exc:
         print(f"workflow: {exc}", file=sys.stderr)
         return 2
 
