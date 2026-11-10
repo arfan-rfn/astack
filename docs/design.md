@@ -1,4 +1,4 @@
-# Ast﻿ack implementation decisions
+# Astack implementation decisions
 
 The shared source is named **astack**, per the implementation-session rename.
 The original PLAN.md is retained as the rollout contract, including its former name.
