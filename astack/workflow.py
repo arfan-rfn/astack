@@ -170,6 +170,12 @@ def descriptor(root):
         raise WorkflowError("documents must be an array")
     for doc in d.get("documents", []):
         relative(doc)
+    locks = d.get("locks", {})
+    if not isinstance(locks, dict) or set(locks) - {"skills", "tools"}:
+        raise WorkflowError("locks selects skills and tools lock paths, or null")
+    for lock in locks.values():
+        if lock is not None:
+            relative(lock)
     if not isinstance(d.get("checks"), dict) or set(d["checks"]) != {"fast", "task", "full"}:
         raise WorkflowError("Declare fast, task, full checks; use null for unavailable lanes")
     for command in d["checks"].values():
@@ -297,7 +303,10 @@ class Project:
             add("Descriptor revision differs from installed snapshot")
         if (self.local / "journal.json").exists():
             add("Interrupted activation; bootstrap must recover the journal")
-        for name in self.d.get("documents", []):
+        references = self.d.get("documents", []) + [
+            name for name in self.d.get("locks", {}).values() if name is not None
+        ]
+        for name in references:
             p = safe_path(self.root, name)
             if not p.is_file() or not p.resolve().is_relative_to(self.root):
                 add(f"Missing or external project reference: {name}")
@@ -472,6 +481,10 @@ def snapshot(project, source, revision):
         "workflow.json": file_entry(encoded(d)),
         "tools/workflow.py": file_entry(blob("astack/workflow.py"), 0o755),
     }
+    tool_lock = d.get("locks", {}).get("tools")
+    if tool_lock is not None:
+        files[tool_lock] = file_entry(blob("tools.lock.json"))
+        files["tools/upstream.py"] = file_entry(blob("astack/upstream.py"), 0o755)
     for name in d["skills"]:
         prefix = f"skills/{name}/"
         listing = run(["git", "ls-tree", "-r", "-z", revision, "--", prefix], cwd=source)

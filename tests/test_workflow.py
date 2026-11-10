@@ -26,6 +26,7 @@ class WorkflowTests(unittest.TestCase):
             import shutil
             shutil.copytree(SOURCE / folder, self.source / folder,
                             ignore=shutil.ignore_patterns("__pycache__"))
+        (self.source / "tools.lock.json").write_bytes((SOURCE / "tools.lock.json").read_bytes())
         self.rev = self.commit("initial")
         self.root = self.base / "project"
         self.root.mkdir()

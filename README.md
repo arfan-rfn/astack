@@ -31,6 +31,10 @@ runs independently: `python3 tools/workflow.py doctor --project . --json`.
 Use `--host` for host capabilities and global discovery verification. Without it,
 doctor verifies only the checkout and has no evidence for host-specific capabilities.
 Use `--state` before the command to select another private host state root.
+The optional `locks` map references the manager-owned skills lock and the generated
+tools lock. With a tools lock selected, bootstrap also vendors `tools/upstream.py`
+and the approved `tools.lock.json`; run `python3 tools/upstream.py --lock tools.lock.json`
+for the same upstream preparation commands. Generated manifests are never hand-edited.
 
 ## Update and rollback
 

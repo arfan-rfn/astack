@@ -7,7 +7,10 @@ import subprocess
 import sys
 import tempfile
 
-from astack.workflow import WorkflowError, SHA, NAME, atomic, encoded, now, read_json, run
+try:
+    from astack.workflow import WorkflowError, SHA, NAME, atomic, encoded, now, read_json, run
+except ModuleNotFoundError:  # Standalone project snapshot, adjacent to workflow.py.
+    from workflow import WorkflowError, SHA, NAME, atomic, encoded, now, read_json, run
 
 
 def rendered_identity(root):
