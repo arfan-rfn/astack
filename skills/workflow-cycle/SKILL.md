@@ -51,8 +51,8 @@ mockups. Then write the build prompt for a fresh session.
 
 - **Large builds** run in a fresh session with `workflow-build`. Smaller tiers build
   in the current session with `tdd`.
-- **Bugs.** Reproduce the bug with `diagnosing-bugs` before changing code. Use
-  `investigate` when the user wants a written root cause.
+- **Bugs.** Run `diagnosing-bugs` and get a command that fails on the bug before
+  changing code. For a written root cause, write up what that run found.
 - **Proof.** `verify` runs the repository checks until green. `workflow-verify` adds
   the acceptance evidence. `qa` walks each journey on the real CLI, API, browser or
   device. Passing unit tests leave the journeys unproven.
