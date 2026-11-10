@@ -42,6 +42,8 @@ npx --yes skills@<skills_cli> add <url> --skill <names> --agent <agents> --globa
   declares. The `unslop` patch turns on model invocation because this workflow
   applies it to all prose. Reapply it after every update.
 - `grill-me` routes to `grilling`. Install both.
+- The CLI installs Claude Code skills into `CLAUDE_CONFIG_DIR` when that variable is
+  set. A user with several Claude config folders runs both commands once per folder.
 
 ## gstack
 
