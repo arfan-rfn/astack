@@ -23,6 +23,9 @@ Read the approved plan and project instructions, architecture, constraints, and 
 commands. Apply the project's approval requirements. Build all selected releases;
 keep explicitly deferred work separate. Check prerequisites before dependent work.
 A missing capability blocks the affected tasks, not independent preparation.
+Read existing CONSTRAINTS.md; use the installed constraint-driven-development skill
+only if the quality bar is missing or being changed. Report missing dependencies
+and use workflow-setup when installation is authorized.
 
 Read [the state record and worker brief](references/state.md) before dispatching.
 Use the project's planning directory, or a private local directory when required.
@@ -48,6 +51,9 @@ For each ready task, save its brief and assignment before dispatch. Give the wor
 the relevant plan, contract, project rules, allowed files, checks, workspace, and
 handoff requirements from the state reference. Workers implement and test their own
 small task; they do not spawn more workers, merge other tasks, push, or deploy.
+For behavior changes, brief workers to load the installed tdd skill and use its
+vertical red-to-green loop. Include the approved public test seams; approval already
+recorded in the plan need not be requested again. Keep prose-only edits proportional.
 
 Start independent tasks together up to the host's capacity. Launch a dependent task
 only after its prerequisites pass integration checks. Record each worker's actual ID,

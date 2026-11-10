@@ -18,7 +18,10 @@ removing a referenced file. Prefer improving an existing skill over adding an ov
 For a new skill, create `skills/<name>/SKILL.md` with YAML frontmatter containing
 `name` and a description of when to use it. Match the folder name to the declared
 name using lowercase letters, digits, and hyphens. Add supporting files only when
-they serve the skill; avoid installers, dependencies, and placeholder scaffolding.
+they serve the skill; avoid unrequested install machinery and placeholder scaffolding.
+For upstream dependencies, update workflow-setup's central dependency list, verify
+the pinned source and license, and test its setup recipe. Do not scatter pins across
+individual skills or silently upgrade consuming projects.
 
 Check frontmatter, relative links, and consistency with the requested behavior.
 Walk through a representative request to catch missing steps or unintended actions.

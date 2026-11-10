@@ -1,21 +1,44 @@
 # astack
 
-Reusable Markdown skills for building, verifying, and handing off project work.
+A shared development workflow, from a vague idea to a verified release.
 
-- [workflow-build](skills/workflow-build/SKILL.md): orchestrate small parallel worker tasks, track progress, integrate results, and resume interrupted builds.
+- [workflow-cycle](skills/workflow-cycle/SKILL.md): route clarification, planning, constraints, TDD, proof, review, shipping, and authorized deployment.
+- [workflow-setup](skills/workflow-setup/SKILL.md): download upstream skills and integrate the workflow with a project's agent instructions.
+- [workflow-build](skills/workflow-build/SKILL.md): orchestrate parallel workers, track progress, integrate results, and resume builds.
 - [workflow-verify](skills/workflow-verify/SKILL.md): run project checks and verify acceptance evidence.
 - [workflow-handoff](skills/workflow-handoff/SKILL.md): report changes, verification, and unfinished work.
 - [workflow-maintain](skills/workflow-maintain/SKILL.md): create, improve, publish, and update shared skills.
 
-## Install
+## First-time setup
 
-Keep the shared source at `~/projects/astack`. Clone it once, or use your existing checkout:
+Clone once, or use your existing checkout:
 
 ```sh
 git clone https://github.com/arfan-rfn/astack.git ~/projects/astack
 ```
 
-From a project directory, copy the skills:
+From the target project, ask your agent:
+
+> Read ~/projects/astack/skills/workflow-setup/SKILL.md and use it to install this project's development workflow for Codex and Claude Code. Preserve existing project instructions and report anything unavailable.
+
+Select only the agents you use. Setup needs Git, Node/npm and Bun for gstack. It
+installs declared dependencies, copies astack's skills, updates a managed section in
+AGENTS.md and the applicable CLAUDE.md, and records effective paths and versions.
+It preserves unrelated instructions and stops conflicting replacements with a diff.
+
+The [dependency list](skills/workflow-setup/references/dependencies.json) is the one
+place to maintain shared sources and selected revisions:
+
+- Matt Pocock: grill-me/grilling, TDD, and codebase design.
+- Addy Osmani: constraint-driven development.
+- Cursor's pstack plugin: unslop, applied to authored prose throughout the session.
+- Gstack: office-hours, autoplan and individual plan reviews, review, QA, ship, land-and-deploy, and its supporting tools.
+
+Gstack uses its own setup; copying its Markdown is not installation. Cloning astack
+alone downloads only astack. Invoking workflow-setup downloads the other pieces.
+Browser/native readiness is reported separately from files being installed.
+
+For only astack's Markdown skills, copy the folders manually:
 
 ```sh
 cd /path/to/your-project
@@ -23,54 +46,47 @@ mkdir -p .agents/skills
 cp -R ~/projects/astack/skills/. .agents/skills/
 ```
 
-For Claude Code, use `.claude/skills/` as the destination. You can copy individual
-skill folders; keep each folder's referenced files with it. Commit the copied folders
-with your project.
+Use `.claude/skills/` for Claude Code. Keep references with their skill folders.
+Manual copying does not install external dependencies.
 
 ## Use
 
-Start a new agent session in your project and ask:
+Start a fresh agent session in the configured project and ask:
 
+- "Use workflow-cycle to help me turn this idea into an approved plan."
 - "Use workflow-build to implement docs/plan.md with an orchestrator and parallel workers."
 - "Use workflow-build to resume docs/plan.md from its saved build state."
-- "Use workflow-verify to check this work."
-- "Use workflow-handoff to prepare a handoff."
+- "Use workflow-cycle to review and ship this tested release. Stop before deployment."
 - "Use workflow-maintain to improve workflow-build and push the shared-source changes."
 
-Project instructions own the architecture, commands, and release rules. Projects
-using gstack install it separately.
+Constraints are established once per repo and followed on each change. TDD applies
+to behavior changes. Build sessions prove the feature and hand off for the project's
+manual test; shipping and deployment follow their own authorization gates. Existing
+project rules, test commands, model choices, and production boundaries stay in force.
+Project-specific skills remain owned by their projects and are inventoried during setup.
 
-`workflow-build` uses the agent's delegation tools. The main agent keeps a build-state
-record with tasks, dependencies, worker assignments, reviews, integration results,
-and acceptance evidence. Workers handle bounded tasks; independent tasks run in
-parallel when the host supports it. If delegation is unavailable, the skill reports
-that limitation. It does not select a model or install an orchestration service.
-
-## Create or improve a skill
+## Create or improve skills
 
 Edit the original files under `~/projects/astack/skills/`. For a new skill, create
-`skills/your-skill/SKILL.md` with `name` and `description` frontmatter like the existing
-skills, and add it to the list above. To update an existing skill, edit its current file.
-
-Review the changes, then publish them:
+`skills/your-skill/SKILL.md` with `name` and `description` frontmatter and add it above.
+Review changes and any affected setup dependency entries, then publish:
 
 ```sh
 cd ~/projects/astack
 git diff --check
 git add skills README.md
-git commit -m "Improve workflow-build instructions"
+git commit -m "Improve development workflow"
 git push origin main
 ```
 
-## Update project copies
-
-Pull the latest shared source:
+## Update projects
 
 ```sh
 git -C ~/projects/astack pull --ff-only
 ```
 
-Review the changes and preserve project-specific edits before replacing copies.
-After sessions using those skills finish, repeat the install copy command in each
-project. Review `git diff -- .agents/skills` and commit the update there. Start a fresh
-agent session to use it. Pushing to astack does not automatically change project copies.
+Ask the project's agent to use workflow-setup to check and update the installation.
+It compares sources, existing content and the setup record before changing selected
+entries. Preserve local customizations, finish sessions using old files first, review
+the resulting diff, and start a fresh session afterward. Pushing to astack does not
+automatically change project copies or authorize global upgrades.

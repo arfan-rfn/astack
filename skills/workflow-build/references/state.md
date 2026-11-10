@@ -45,6 +45,7 @@ Give each worker the relevant context, not the whole conversation:
 - Repository/workspace and base revision; dependency results and shared contracts.
 - Project instructions, allowed files, explicit exclusions, and resource isolation.
 - Required checks and any infrastructure/provider prerequisites.
+- Approved public test seams and TDD red/green evidence for behavior changes.
 - Build-state record location for context; return results to the orchestrator.
 - Boundaries: own task only, no nested delegation, no unrelated edits or publishing.
 
