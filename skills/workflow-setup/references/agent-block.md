@@ -14,6 +14,7 @@ Follow this project's constraints, check commands, product rules, and approval g
 Load unslop before the first authored response and use it for prose, documentation,
 comments, commits, and PR text. Preserve code, quoted evidence, and required tool formats.
 For gstack helper commands, scope GSTACK_STATE_ROOT to this project's .gstack/astack.
+Set GSTACK_PLAN_DIR to the plan root recorded by setup, preserving existing project plans.
 Use actual registered skill names and paths from .agents/astack-setup.md. If a required
 skill is missing, report it and use workflow-setup to repair the requested installation.
 <!-- astack:workflow:end -->

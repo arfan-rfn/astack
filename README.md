@@ -34,6 +34,9 @@ place to maintain shared sources and selected revisions:
 - Cursor's pstack plugin: unslop, applied to authored prose throughout the session.
 - Gstack: office-hours, autoplan and individual plan reviews, review, QA, ship, land-and-deploy, and its supporting tools.
 
+At the selected gstack revision, engineering review runs inside autoplan; its
+standalone plan-eng-review entrypoint has been retired.
+
 Gstack uses its own setup; copying its Markdown is not installation. Cloning astack
 alone downloads only astack. Invoking workflow-setup downloads the other pieces.
 Browser/native readiness is reported separately from files being installed.

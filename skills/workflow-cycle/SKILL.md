@@ -22,8 +22,10 @@ quotes, evidence, and exact required tool/report formats.
   Observe the user's question pacing. Skip a fresh interview for an already approved plan.
 - **Problem and approach:** use gstack `office-hours`, then save its design/plan output.
 - **Plan review:** use `autoplan`, or explicitly selected `plan-ceo-review`,
-  `plan-design-review`, `plan-devex-review`, and `plan-eng-review`. Autoplan already
-  orchestrates its applicable reviews; do not repeat them automatically afterward.
+  `plan-design-review`, and `plan-devex-review`. At the selected upstream revision,
+  standalone `plan-eng-review` is retired; its engineering methodology is retained
+  in autoplan's engineering phase. Route engineering review through autoplan.
+  Autoplan already orchestrates its applicable reviews; do not repeat them automatically afterward.
   Resolve its owner decisions and approval gate before implementation. Include test
   seams, actor journeys, awkward inputs, prerequisites, and release dependencies.
 - **Project quality bar:** read existing CONSTRAINTS.md. Use

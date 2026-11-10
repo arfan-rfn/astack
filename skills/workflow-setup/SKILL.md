@@ -44,6 +44,8 @@ staging directory, use the declared CLI release:
 npx --yes skills@<skills_cli> add <url> --skill <selected-names> --agent <agents> --yes
 ```
 
+Set `XDG_STATE_HOME` to a project-local state directory and disable installer telemetry
+for these commands; the CLI otherwise keeps selection-history state in user globals.
 Use `codex`, `claude-code`, or both as requested. Omit global flags. Keep complete
 skill folders, including references, and retain upstream license notices when
 redistributing them. The manager owns `skills-lock.json`: never hand-edit it or
@@ -72,7 +74,10 @@ supporting binaries/resources intact.
 
 Scope setup's provider and state roots to this project:
 `CODEX_HOME=<project>/.agents`, `CLAUDE_CONFIG_DIR=<project>/.claude`, and
-`GSTACK_STATE_ROOT=<project>/.gstack/astack`. These are setup/helper scopes, not
+`GSTACK_STATE_ROOT=<project>/.gstack/astack`. Also set `GSTACK_PLAN_DIR` for helper
+commands to the project's declared plan root, or `.gstack/astack/plans` when absent;
+state scoping alone still defaults plans to the user's `.claude/plans` at this pin.
+These are setup/helper scopes, not
 instructions to relocate an agent's credentials or change its launch environment.
 Use stock `./setup --host codex --global --prefix --no-team --no-harness-auto`,
 or `--host claude`; run each separately for both agents. Here `--global` is scoped
@@ -82,12 +87,21 @@ live under the project's `.claude/skills/gstack`, not an arbitrary cache directo
 Never run it with unverified roots or source paths pointing to user globals.
 Disable both `auto_upgrade` and `update_check` using this revision's gstack-config.
 Do not change the runtime provider/model. Record any setup-time rendering profile.
+If Codex discovery folders are prefixed but their generated frontmatter names are
+short, use the bundled `bin/gstack-patch-names <generated-skill-parent> true` on the
+resolved Codex render directory inside this project. Verify that directory first;
+record this upstream-supported render step rather than patching pristine source.
+This pin also uses legacy welcome/cache markers under `~/.gstack` and normal package
+caches. Inspect those paths; do not describe setup as a hermetic sandbox. If the
+host forbids those writes, report the upstream limitation instead of changing HOME
+or silently patching setup. Global agent settings and installations remain protected.
 
 Default upstream setup prepares its browser assets. Use `--no-browser` only when
 requested, or report the missing browser capability if preparation fails. Never
 claim browser/native proof from helper installation alone. Keep gstack source,
 state, and generated `gstack`/`gstack-*` discovery entries local and ignored in Git;
 add only these owned patterns to the project's ignore rules, preserving existing ones.
+Do not end symlink ignore patterns such as `/.agents/skills/gstack-*` with `/`.
 
 ## Integrate and verify
 
@@ -101,6 +115,11 @@ relative aliases, manager refs, and gstack's source/config/generated helpers. Ma
 short lifecycle names to actual registered names such as `gstack-qa`; distinguish
 astack's `workflow-verify` from unrelated skills named `verify`. Reuse project-specific
 skills such as screen-check or agent-capability only when that project requires them.
+Engineering review is an autoplan phase at this pin, not a missing standalone skill.
+Inspect nonzero helper diagnostics rather than ignoring them. This pin's setup status
+can flag the unused unprefixed alternative in review's conditional QA link; verify
+the applicable prefixed target and record that diagnostic explicitly. Other failures
+remain blockers for their affected capabilities.
 
 Write a concise `.agents/astack-setup.md` record: astack revision, selected upstream
 commits, CLI/tool versions, effective skill paths, declared patches, content identities,

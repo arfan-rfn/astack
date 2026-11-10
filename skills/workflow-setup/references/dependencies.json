@@ -25,6 +25,7 @@
   "gstack": {
     "repository": "garrytan/gstack",
     "revision": "b6155921a564ba9ec2470fd2cb3894c05e2c2d13",
-    "required": ["office-hours", "autoplan", "plan-ceo-review", "plan-design-review", "plan-devex-review", "plan-eng-review", "review", "qa", "ship", "land-and-deploy", "canary", "browse"]
+    "required": ["office-hours", "autoplan", "plan-ceo-review", "plan-design-review", "plan-devex-review", "review", "qa", "ship", "land-and-deploy", "canary", "browse"],
+    "engineering_review": {"entrypoint": "autoplan", "reference": "autoplan/sections/eng-phase.md"}
   }
 }
