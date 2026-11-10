@@ -1,22 +1,65 @@
-# Restart and evidence record
+# Build state and worker briefs
 
-Keep task state in the project's declared planning directory, or a host-local record
-when project policy does not permit committing it. Exclude credentials and accounts.
+Use one durable record per plan, for example `plan/<slug>-build-state.md`, unless
+project policy selects another location. It is the orchestrator's memory across
+restarts. The orchestrator alone updates it; workers return handoffs. Keep credentials
+and private account data out. Write before starting an operation and after it ends;
+use observed ISO 8601 timestamps with an explicit timezone.
+Record task and checkpoint transitions concisely; link bulky logs instead of copying
+them into the ledger. Uncommitted work needs HEAD plus a diff or content identity,
+not HEAD alone, to identify the inputs that were verified.
 
-Record:
+## Record layout
 
-- Plan path and selected releases; actual source revisions and workflow revision.
-- Current step; acceptance journeys; dependencies and responsible lanes, if any.
-- Decisions with rationale and rejected alternatives; unresolved questions.
-- Each action's timezone-aware start/end timestamp and result.
-- Verification command, working directory, exit status, revision and evidence path.
-- Blockers, changed prerequisites, deviations, and the next recovery action.
+Keep these sections in the record; add rows as actual tasks are discovered.
 
-Write before starting an operation and after it finishes. On restart, inspect Git,
-worktrees and the current capability results before trusting the record. Mark old
-evidence stale if consumed inputs changed. Never repeat an irreversible operation
-only because the previous session lost its conversation history.
+- **Current:** plan path, selected/deferred releases, repositories and revisions,
+  workflow source revision when known, current checkpoint, next action, updated time.
+- **Releases:** dependencies, acceptance journeys, task coverage, checkpoint status,
+  integrated revisions, evidence, and unverified prerequisites.
+- **Tasks:** the ledger below, plus each task's saved worker brief.
+- **Decisions and amendments:** user changes, shared contract changes, rationale,
+  affected tasks/workers, and unresolved questions.
+- **Events and handoffs:** starts, completions, worker reports, review findings,
+  correction rounds, integration attempts, and observed failures with timestamps.
+- **Verification and final handoff:** commands, working directories, exit statuses,
+  consumed revisions, evidence paths, blockers, manual checks, and review/ship next steps.
 
-If CI fails after an earlier green result, reopen the affected release and every
-dependent journey. Record the failing revision and rerun the relevant checks after
-the fix; do not carry the earlier green verdict into the handoff.
+Use this task ledger; workspace and runtime details can live in the saved brief when
+rows become too wide.
+
+| Task | Release / outcome | Depends on | Allowed files / workspace | Worker / tool / runtime | Status | Checks / revision / evidence | Updated at |
+|---|---|---|---|---|---|---|---|
+
+Statuses: `pending` -> `running` -> `review` -> `integrated`. Use `blocked` for an
+unresolved prerequisite or failed integration, recording the prior state and next
+action. A correction returns the task to `running` under one active owner. Mark work
+`deferred` only when the plan or user defers it. Record worker completion separately
+from review acceptance, integration, and release acceptance.
+
+## Worker brief
+
+Give each worker the relevant context, not the whole conversation:
+
+- Task ID, selected release, one concrete outcome, and acceptance conditions.
+- Repository/workspace and base revision; dependency results and shared contracts.
+- Project instructions, allowed files, explicit exclusions, and resource isolation.
+- Required checks and any infrastructure/provider prerequisites.
+- Build-state record location for context; return results to the orchestrator.
+- Boundaries: own task only, no nested delegation, no unrelated edits or publishing.
+
+The worker handoff names its task ID, changed files and commit/diff location, commands
+actually run with results, remaining failures or blockers, and interface assumptions.
+A worker finding work outside its brief reports it rather than silently expanding scope.
+
+## Restart and stale evidence
+
+Compare the record with Git, actual workspaces, and available completion information.
+Follow the host's continuation rules for running workers; do not start duplicate owners.
+Check partial integration before retrying it. If a recorded worker no longer exists,
+recover its files/diff and assign only the remaining work after confirming it stopped.
+
+Record discrepancies, then resume the first unverified task or release checkpoint.
+Do not trust an old green result after its inputs change, or redo verified work
+unchanged. If CI fails after a green checkpoint, reopen the affected release and
+its dependents, preserve the failure, and rerun relevant checks on the corrected revision.

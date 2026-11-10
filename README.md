@@ -2,7 +2,7 @@
 
 Reusable Markdown skills for building, verifying, and handing off project work.
 
-- [workflow-build](skills/workflow-build/SKILL.md): implement an approved plan and recover interrupted work.
+- [workflow-build](skills/workflow-build/SKILL.md): orchestrate small parallel worker tasks, track progress, integrate results, and resume interrupted builds.
 - [workflow-verify](skills/workflow-verify/SKILL.md): run project checks and verify acceptance evidence.
 - [workflow-handoff](skills/workflow-handoff/SKILL.md): report changes, verification, and unfinished work.
 - [workflow-maintain](skills/workflow-maintain/SKILL.md): create, improve, publish, and update shared skills.
@@ -31,13 +31,20 @@ with your project.
 
 Start a new agent session in your project and ask:
 
-- "Use workflow-build to implement docs/plan.md."
+- "Use workflow-build to implement docs/plan.md with an orchestrator and parallel workers."
+- "Use workflow-build to resume docs/plan.md from its saved build state."
 - "Use workflow-verify to check this work."
 - "Use workflow-handoff to prepare a handoff."
 - "Use workflow-maintain to improve workflow-build and push the shared-source changes."
 
 Project instructions own the architecture, commands, and release rules. Projects
 using gstack install it separately.
+
+`workflow-build` uses the agent's delegation tools. The main agent keeps a build-state
+record with tasks, dependencies, worker assignments, reviews, integration results,
+and acceptance evidence. Workers handle bounded tasks; independent tasks run in
+parallel when the host supports it. If delegation is unavailable, the skill reports
+that limitation. It does not select a model or install an orchestration service.
 
 ## Create or improve a skill
 
