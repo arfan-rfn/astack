@@ -239,6 +239,24 @@ class WorkflowTests(unittest.TestCase):
             self.p.activate(files)
         self.assertTrue(self.p.doctor()["ok"])
 
+    def test_project_configuration_change_is_staged_without_live_edits(self):
+        self.install()
+        old = (self.root / "workflow.json").read_bytes()
+        proposal = self.base / "proposal.json"
+        d = w.read_json(self.root / "workflow.json")
+        d["checks"]["task"] = "make project-specific-test"
+        proposal.write_bytes(w.encoded(d))
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = w.main(["--state", str(self.state), "update", "--project", str(self.root),
+                         "--candidate", self.rev, "--source", str(self.source),
+                         "--descriptor", str(proposal)])
+        self.assertEqual(rc, 0)
+        self.assertEqual(old, (self.root / "workflow.json").read_bytes())
+        candidate = w.read_json(self.p.local / "candidates" / f"{self.rev}.json")
+        with self.p.lock():
+            self.p.activate(candidate)
+        self.assertEqual(w.descriptor(self.root)["checks"]["task"], "make project-specific-test")
+
     def test_malformed_descriptor_returns_normal_cli_error(self):
         for value in ([], {"schema": 1, "project": "example", "bundle": []}):
             with self.subTest(value=value):

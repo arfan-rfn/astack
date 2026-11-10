@@ -47,6 +47,9 @@ bin/workflow --host /private/host.json rollback --project example --to PREVIOUS_
 ```
 
 Updates only stage; bootstrap activates after drift, collision and drain checks.
+To change project commands, adapters, lock references or selected skills, write a
+proposed descriptor outside the managed checkout and add `--descriptor proposal.json`
+to `update --source ...`. Review and activate that candidate through the same flow.
 Bootstrap twice does not rewrite verified content. A managed edit stops with a diff
 when the local baseline is available. Existing unowned skills are never adopted by
 matching names. Reconcile them in a proposal checkout first. Rollback restores owned

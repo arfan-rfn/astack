@@ -1,21 +1,23 @@
 """Prepare upstream packages in separate, immutable provider and state roots."""
+
 import argparse
 import hashlib
 import os
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
 try:
-    from astack.workflow import WorkflowError, SHA, NAME, atomic, encoded, now, read_json, run
+    from astack.workflow import NAME, SHA, WorkflowError, atomic, encoded, now, read_json, run
 except ModuleNotFoundError:  # Standalone project snapshot, adjacent to workflow.py.
-    from workflow import WorkflowError, SHA, NAME, atomic, encoded, now, read_json, run
+    from workflow import NAME, SHA, WorkflowError, atomic, encoded, now, read_json, run
 
 
 def rendered_identity(root):
     """Hash discovered instructions and references, following links with cycle detection."""
     hashes = {}
+
     def walk(path, name, ancestors):
         resolved = path.resolve()
         if resolved in ancestors:
@@ -26,10 +28,13 @@ def rendered_identity(root):
             for child in sorted(path.iterdir()):
                 walk(child, f"{name}/{child.name}", ancestors | {resolved})
         elif path.is_file():
-            hashes[name] = {"sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-                            "mode": path.stat().st_mode & 0o777}
+            hashes[name] = {
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "mode": path.stat().st_mode & 0o777,
+            }
         else:
             raise WorkflowError(f"Broken upstream reference: {path}")
+
     walk(root, "skills", set())
     return hashlib.sha256(encoded(hashes)).hexdigest()
 
@@ -45,7 +50,9 @@ def verify(target, spec):
         raise WorkflowError("Gstack rendered instructions drift")
     env = os.environ | record["environment"]
     for key in ("auto_upgrade", "update_check"):
-        value = run([str(target / "source/bin/gstack-config"), "get", key], env=env).decode().strip()
+        value = (
+            run([str(target / "source/bin/gstack-config"), "get", key], env=env).decode().strip()
+        )
         if value != "false":
             raise WorkflowError(f"Gstack {key} must remain false")
     return record
@@ -58,38 +65,75 @@ def prepare(target, spec, adapter, source=None):
     if (target / "prepared.json").exists():
         record = verify(target, spec)
         if record["adapter"] != adapter:
-            raise WorkflowError("Prepared generation belongs to a different adapter; use a new target")
+            raise WorkflowError(
+                "Prepared generation belongs to a different adapter; use a new target"
+            )
         return record
     if target.exists():
-        raise WorkflowError("Target exists without verified preparation; use a new empty generation")
+        raise WorkflowError(
+            "Target exists without verified preparation; use a new empty generation"
+        )
     target.mkdir(parents=True, mode=0o700)
     # This path never becomes active automatically. A failed setup is retained for inspection.
-    env = os.environ | {"GSTACK_STATE_ROOT": str(target / "state"),
-                        "CODEX_HOME": str(target / "codex"),
-                        "CLAUDE_CONFIG_DIR": str(target / "claude"),
-                        "GSTACK_SKIP_PLAYWRIGHT": "1", "GSTACK_SKIP_FONTS": "1",
-                        "GSTACK_HARNESS_AUTO": "0"}
-    run(["git", "clone", "--no-hardlinks", "--no-checkout", str(source or spec["repository"]),
-         str(target / "source")])
+    env = os.environ | {
+        "GSTACK_STATE_ROOT": str(target / "state"),
+        "CODEX_HOME": str(target / "codex"),
+        "CLAUDE_CONFIG_DIR": str(target / "claude"),
+        "GSTACK_SKIP_PLAYWRIGHT": "1",
+        "GSTACK_SKIP_FONTS": "1",
+        "GSTACK_HARNESS_AUTO": "0",
+    }
+    run(
+        [
+            "git",
+            "clone",
+            "--no-hardlinks",
+            "--no-checkout",
+            str(source or spec["repository"]),
+            str(target / "source"),
+        ]
+    )
     run(["git", "remote", "set-url", "origin", spec["repository"]], cwd=target / "source")
     # Always prove provenance against upstream even when reusing a local object cache.
     run(["git", "fetch", "origin", spec["revision"]], cwd=target / "source")
     run(["git", "checkout", "--detach", spec["revision"]], cwd=target / "source")
     setup = target / "source/setup"
-    result = subprocess.run([str(setup), "--host", adapter, "--global", "--no-team",
-                             "--prefix", "--no-browser", "--no-harness-auto"],
-                            env=env, cwd=target / "source", capture_output=True)
+    result = subprocess.run(
+        [
+            str(setup),
+            "--host",
+            adapter,
+            "--global",
+            "--no-team",
+            "--prefix",
+            "--no-browser",
+            "--no-harness-auto",
+        ],
+        env=env,
+        cwd=target / "source",
+        capture_output=True,
+    )
     atomic(target / "setup.log", result.stdout + result.stderr)
     if result.returncode:
-        raise WorkflowError(f"Upstream setup failed ({result.returncode}); inspect {target / 'setup.log'}")
+        raise WorkflowError(
+            f"Upstream setup failed ({result.returncode}); inspect {target / 'setup.log'}"
+        )
     for key, value in (("auto_upgrade", "false"), ("update_check", "false"), ("telemetry", "off")):
         run([str(target / "source/bin/gstack-config"), "set", key, value], env=env)
     skill_path = f"{adapter}/skills"
-    record = {"schema": 1, "prepared_at": now(), "adapter": adapter,
-              "source_revision": spec["revision"], "source_repository": spec["repository"],
-              "skills_path": skill_path, "rendered_identity": rendered_identity(target / skill_path),
-              "environment": {k: env[k] for k in ("GSTACK_STATE_ROOT", "CODEX_HOME", "CLAUDE_CONFIG_DIR")},
-              "browser": "pending: Chromium not installed by this preparation"}
+    record = {
+        "schema": 1,
+        "prepared_at": now(),
+        "adapter": adapter,
+        "source_revision": spec["revision"],
+        "source_repository": spec["repository"],
+        "skills_path": skill_path,
+        "rendered_identity": rendered_identity(target / skill_path),
+        "environment": {
+            k: env[k] for k in ("GSTACK_STATE_ROOT", "CODEX_HOME", "CLAUDE_CONFIG_DIR")
+        },
+        "browser": "pending: Chromium not installed by this preparation",
+    }
     atomic(target / "prepared.json", encoded(record))
     return verify(target, spec)
 
@@ -107,8 +151,21 @@ def restore_skills(directory, lock_path, spec):
     atomic(directory / "skills-lock.json", original)
     with tempfile.TemporaryDirectory(prefix="astack-skills-cli-") as temp:
         cli = Path(temp)
-        atomic(cli / "package.json", encoded({"private": True, "dependencies": {"skills": spec["version"]}}))
-        run(["npm", "install", "--package-lock-only", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=cli)
+        atomic(
+            cli / "package.json",
+            encoded({"private": True, "dependencies": {"skills": spec["version"]}}),
+        )
+        run(
+            [
+                "npm",
+                "install",
+                "--package-lock-only",
+                "--ignore-scripts",
+                "--no-audit",
+                "--no-fund",
+            ],
+            cwd=cli,
+        )
         resolved = read_json(cli / "package-lock.json")["packages"]["node_modules/skills"]
         if resolved["integrity"] != spec["integrity"] or resolved["version"] != spec["version"]:
             raise WorkflowError("Skills CLI integrity differs from the approved tool lock")
@@ -116,12 +173,18 @@ def restore_skills(directory, lock_path, spec):
         package = cli / "node_modules/skills"
         binary = read_json(package / "package.json")["bin"]
         binary = binary["skills"] if isinstance(binary, dict) else binary
-        run(["node", str(package / binary), "experimental_install", "--frozen-lockfile", "--force"],
-            cwd=directory, env=os.environ | {"DISABLE_TELEMETRY": "1"})
+        run(
+            ["node", str(package / binary), "experimental_install", "--frozen-lockfile", "--force"],
+            cwd=directory,
+            env=os.environ | {"DISABLE_TELEMETRY": "1"},
+        )
     if (directory / "skills-lock.json").read_bytes() != original:
         raise WorkflowError("Skill manager changed a frozen lock")
     for name in expected:
-        if not NAME.fullmatch(name) or not (directory / ".agents/skills" / name / "SKILL.md").is_file():
+        if (
+            not NAME.fullmatch(name)
+            or not (directory / ".agents/skills" / name / "SKILL.md").is_file()
+        ):
             raise WorkflowError(f"Skill manager did not restore locked skill: {name}")
     return {"restored_at": now(), "identity": rendered_identity(directory / ".agents/skills")}
 

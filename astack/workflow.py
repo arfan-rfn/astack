@@ -138,8 +138,8 @@ def put(root, name, item):
         atomic(p, base64.b64decode(item["data"]), item["mode"])
 
 
-def descriptor(root):
-    d = read_json(root / "workflow.json")
+def descriptor(root, proposal=None):
+    d = read_json(proposal or root / "workflow.json")
     if not isinstance(d, dict):
         raise WorkflowError("workflow.json must contain an object")
     if d.get("schema") != 1 or not NAME.fullmatch(d.get("project", "")):
@@ -574,6 +574,8 @@ def main(argv=None):
             p.add_argument("--candidate", help="Full immutable Git commit")
         if command == "bootstrap":
             p.add_argument("--dry-run", action="store_true")
+        if command == "update":
+            p.add_argument("--descriptor", type=Path, help="Proposed project descriptor to stage")
         if command == "rollback":
             p.add_argument("--to", required=True)
         if command == "run":
@@ -681,6 +683,13 @@ def main(argv=None):
                 if not SHA.fullmatch(revision):
                     raise WorkflowError("Candidate must be an immutable commit")
                 candidate = p.local / "candidates" / f"{revision}.json"
+                if args.command == "update" and args.descriptor:
+                    proposed = descriptor(p.root, args.descriptor)
+                    if proposed["project"] != p.d["project"]:
+                        raise WorkflowError("A candidate cannot change the project identifier")
+                    if not args.source:
+                        raise WorkflowError("A descriptor change requires --source")
+                    p.d = proposed
                 if args.source:
                     files = snapshot(p, args.source, revision)
                 elif candidate.exists():
