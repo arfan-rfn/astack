@@ -305,6 +305,7 @@ class Project:
                 if not alias.is_file() or (canonical.is_file() and alias.read_bytes() != canonical.read_bytes()):
                     add(f"Adapter content mismatch: {name}")
         capabilities = self.host.get("capabilities", {})
+        capability_results = {}
         for name, requirement in self.d.get("capabilities", {}).items():
             probe = capabilities.get(name)
             available = False
@@ -316,8 +317,10 @@ class Project:
                     pass
             if not available:
                 add(f"Capability unavailable: {name}", requirement == "required")
+            capability_results[name] = {"available": available, "requirement": requirement}
         return {"schema": 1, "project": self.d["project"], "revision": self.d["bundle"]["revision"],
-                "ok": not any(f["required"] for f in findings), "findings": findings}
+                "ok": not any(f["required"] for f in findings), "findings": findings,
+                "capabilities": capability_results}
 
     def recover(self):
         journal = self.local / "journal.json"
@@ -516,10 +519,22 @@ def main(argv=None):
                 if not command:
                     raise WorkflowError("Supply an agent command after --")
                 token = uuid4().hex
+                declared = host.get("runtime_identity", {})
+                runtime_version = None
+                probe = declared.get("version_argv")
+                if isinstance(probe, list) and probe and all(isinstance(s, str) for s in probe):
+                    observed = subprocess.run(probe, capture_output=True, timeout=10)
+                    if observed.returncode == 0:
+                        runtime_version = observed.stdout.decode(errors="replace").strip()[:500]
                 session = {"schema": 1, "created_at": now(), "token": token,
                            "project_revision": run(["git", "rev-parse", "HEAD"], cwd=p.root).decode().strip(),
                            "bundle_revision": p.d["bundle"]["revision"], "manifest": p.managed(),
                            "adapter_version": VERSION, "python": platform.python_version(),
+                           "runtime_identity": {"provider": declared.get("provider"),
+                                                "model": declared.get("model"),
+                                                "effort": declared.get("effort"),
+                                                "version": runtime_version,
+                                                "selection_evidence": "host-declared; null means unobserved"},
                            "runtime": command[0], "capabilities": report, "pid": os.getpid()}
                 lease = p.local / "sessions" / f"{token}.json"
                 atomic(lease, encoded(session))
@@ -568,7 +583,7 @@ def main(argv=None):
         finally:
             with p.lock():
                 lease.unlink(missing_ok=True)
-    except (WorkflowError, OSError, KeyError, TypeError, ValueError, AttributeError) as exc:
+    except (WorkflowError, OSError, KeyError, TypeError, ValueError, AttributeError, subprocess.TimeoutExpired) as exc:
         print(f"workflow: {exc}", file=sys.stderr)
         return 2
 

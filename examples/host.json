@@ -8,5 +8,6 @@
     "python": ["python3", "--version"],
     "git": ["git", "--version"]
   },
-  "discovery_roots": []
+  "discovery_roots": [],
+  "runtime_identity": {"provider": null, "model": null, "effort": null, "version_argv": []}
 }

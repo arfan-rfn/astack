@@ -223,6 +223,24 @@ class WorkflowTests(unittest.TestCase):
             self.p.activate(self.files(self.new_revision()))
         self.assertEqual(extra.read_text(), "keep customization")
 
+    def test_candidate_bytes_must_match_resolved_manifest(self):
+        self.install()
+        files = self.files(self.new_revision())
+        files[".agents/skills/workflow-build/SKILL.md"] = w.file_entry(b"tampered candidate")
+        with self.p.lock(), self.assertRaisesRegex(w.WorkflowError, "resolved manifest"):
+            self.p.activate(files)
+        self.assertTrue(self.p.doctor()["ok"])
+
+    def test_malformed_descriptor_returns_normal_cli_error(self):
+        for value in ([], {"schema": 1, "project": "example", "bundle": []}):
+            with self.subTest(value=value):
+                (self.root / "workflow.json").write_bytes(w.encoded(value))
+                output = io.StringIO()
+                with contextlib.redirect_stderr(output):
+                    rc = w.main(["doctor", "--project", str(self.root)])
+                self.assertEqual(rc, 2)
+                self.assertNotIn("Traceback", output.getvalue())
+
     def test_unsafe_paths_and_source_symlinks_are_refused(self):
         for name in ("../outside", "/outside", ".git/config", "a/../../outside"):
             with self.subTest(name=name), self.assertRaises(w.WorkflowError):
