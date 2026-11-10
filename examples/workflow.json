@@ -3,8 +3,8 @@
   "project": "example",
   "profile": "core",
   "bundle": {
-    "repository": null,
-    "revision": "0000000000000000000000000000000000000000"
+    "repository": "https://github.com/arfan-rfn/astack.git",
+    "revision": "a2da818594afa4720f9b5c5c5670a85d34bf40d3"
   },
   "skills": ["workflow-build", "workflow-verify", "workflow-handoff"],
   "adapters": {"codex": "copy", "claude": "symlink"},

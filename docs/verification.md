@@ -70,5 +70,6 @@ Workspace versioning, web/mobile rollout, repository-boundary discovery for addi
 workspaces, and external/client project integrations retain their plan boundaries.
 External-governance projects remain local-only/pending; private/client material is
 excluded from shared source. No production or deployment configuration changed.
-Publication visibility is still an explicit decision. No remote repository, push, PR,
-merge or deployment was created by this implementation.
+The publication target is the owner's existing public repository,
+`https://github.com/arfan-rfn/astack`. Private runtime evidence and pilot checkouts
+remain excluded. No pilot adoption PR, merge or deployment has been performed.
