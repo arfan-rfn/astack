@@ -33,9 +33,9 @@ before its first build. Later features read the file.
 - **One decision at a time.** Ask each open decision as its own question, with your
   recommendation and the real cost of each option.
 - **Plan reviews.** `autoplan` runs the CEO, design, engineering and developer
-  experience reviews, so the plan is reviewed once. Run `plan-ceo-review`,
-  `plan-eng-review`, `plan-design-review` or `plan-devex-review` alone when the user
-  names it.
+  experience reviews, so the plan is reviewed once. The engineering review runs only
+  inside `autoplan`. Run `plan-ceo-review`, `plan-design-review` or `plan-devex-review`
+  alone when the user names it.
 - **A later release of an approved plan** starts at plan review. It skips `grill-me`
   and `office-hours`.
 - **Screens.** For UI work, show a mockup of every screen the plan touches and open it

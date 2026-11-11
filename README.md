@@ -31,7 +31,7 @@ place to maintain shared sources and selected revisions:
 - Matt Pocock: grill-me and grilling, TDD, codebase design, bug diagnosis, writing for agents, and handoff.
 - Addy Osmani: constraint-driven development, interface design, and observability.
 - Cursor's pstack plugin: unslop, applied to all prose.
-- Gstack: office-hours, autoplan and the four plan reviews, verify, review, QA, security review, ship, land-and-deploy, canary, browse, and write-skill.
+- Gstack: office-hours, autoplan and the three standalone plan reviews, verify, review, QA, security review, ship, land-and-deploy, canary, browse, and write-skill.
 
 Gstack uses its own setup, which workflow-setup runs. Browser readiness is reported
 separately from the install.
