@@ -21,9 +21,10 @@ Then start a fresh agent session in any project and ask:
 
 > Use workflow-setup to install the workflow's dependencies on this machine.
 
-Setup needs Git, Node/npm and Bun. It installs the pinned upstream skills and gstack
-at user level, so every project on the machine uses the same skills. It shows a diff
-and asks before replacing a skill you edited or moving an existing gstack checkout.
+Setup needs Git, Node/npm, Bun and Python 3.9 or later. It installs the pinned upstream
+skills and gstack at user level, so every project on the machine uses the same skills.
+It shows a diff and asks before replacing a skill you edited or moving an existing
+gstack checkout.
 
 The [dependency list](skills/workflow-setup/references/dependencies.json) is the one
 place to maintain shared sources and selected revisions:
@@ -31,6 +32,7 @@ place to maintain shared sources and selected revisions:
 - Matt Pocock: grill-me and grilling, TDD, codebase design, bug diagnosis, writing for agents, and handoff.
 - Addy Osmani: constraint-driven development, interface design, and observability.
 - Cursor's pstack plugin: unslop, applied to all prose.
+- Theo Browne's tstack: babysit-pr, which watches a pull request through CI and review bots, leaving-pr-comments, which labels the comments an agent posts for you, and council, which asks three models from different providers to review when you say "council".
 - Gstack: office-hours, autoplan and the three standalone plan reviews, verify, review, QA, security review, ship, land-and-deploy, canary, browse, and write-skill.
 
 Gstack uses its own setup, which workflow-setup runs. Browser readiness is reported
@@ -48,8 +50,9 @@ Start a fresh agent session in any project and ask:
 
 workflow-cycle sizes each request as trivial, small, medium or large and runs only
 that tier's stages. Constraints are written once per repo. Build sessions prove the
-feature and stop for your manual test. Ship is done when CI is green on every pull
-request. Review, ship and deploy each start on your word. Existing
+feature and stop for your manual test. Ship is done when every pull request has green
+checks on its head commit or sits in a repository with no CI. Review, ship and deploy
+each start on your word. Existing
 project rules, test commands, model choices, and production boundaries stay in force.
 Project-specific skills remain owned by their projects.
 

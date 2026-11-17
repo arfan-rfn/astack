@@ -26,6 +26,9 @@ user asks. Load `unslop` before writing prose.
 A repository without `CONSTRAINTS.md` runs `constraint-driven-development` once,
 before its first build. Later features read the file.
 
+`council` sits outside the tiers. Run it when the user says the word, for a second
+opinion on a plan or a diff from three providers' models.
+
 ## Plan
 
 - **Research first.** Find facts in the codebase and on the web yourself. Ask the user
@@ -67,9 +70,13 @@ Each of these stages starts on the user's word for this release.
 - **Review.** Run `review` on the real diff. Fix accepted findings, rerun the affected
   checks and journeys, and send findings outside the release to the project's TODO
   list. One review round and one fix round.
-- **Ship.** Run `ship`, then watch every pull request from the moment it opens. Ship
-  is done when CI is green on the head commit of every pull request. Fix a failing
-  check and report a red check as red.
+- **Ship.** Run `ship`. In the same turn, on a repository with CI configured, run
+  `babysit-pr` on every pull request from the moment it opens, and stop watching when
+  every check on its head commit has finished. Ship is done when each pull request has
+  green checks on its head commit or sits in a repository with no CI. Fix a failing
+  check and a real defect a review bot has posted by then, and rerun the checks and
+  journeys the fix touches. Send other bot findings to the project's TODO list. Report
+  a red check as red.
 - **Land.** Run `land-and-deploy` in the project's deploy order, for example the API
   before its clients. Confirm the deployed revision and one live journey, then run
   `canary`. Report pending store releases and missing production proof.
