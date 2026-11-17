@@ -11,8 +11,8 @@ exactly what it names.
 
 ## Steps
 
-1. **Check tools.** Git, Node with npm, and Bun for gstack. Report a missing tool and
-   stop the steps that need it.
+1. **Check tools.** Git, Node with npm, Bun for gstack, and Python 3.9 or later
+   for the `babysit-pr` watcher. Report a missing tool and stop the steps that need it.
 2. **Inventory.** Run `npx --yes skills@<skills_cli> list -g` and read the revision of
    `~/.claude/skills/gstack`. Mark each dependency missing, current, outdated or
    locally edited.

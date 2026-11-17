@@ -20,6 +20,12 @@
       "skills": ["unslop"],
       "license": "pstack/LICENSE",
       "installed_frontmatter": {"unslop": {"disable-model-invocation": false}}
+    },
+    {
+      "repository": "t3dotgg/tstack",
+      "revision": "11e37a74d0a6868c121cd0910ab2b3bd9873b92a",
+      "skills": ["babysit-pr", "leaving-pr-comments", "council"],
+      "license": "LICENSE"
     }
   ],
   "gstack": {
